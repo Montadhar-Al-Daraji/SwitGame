@@ -10,7 +10,6 @@ const GameXO = {
     mode: null,
     vsComputer: false,
 
-    // ===== بدء اللعبة - اختيار الوضع =====
     start() {
         const container = document.getElementById('gameContainer');
         if (!container) return;
@@ -40,7 +39,6 @@ const GameXO = {
         `;
     },
 
-    // ===== لعب ضد الكمبيوتر =====
     startComputerGame() {
         this.mode = 'computer';
         this.vsComputer = true;
@@ -48,7 +46,6 @@ const GameXO = {
         this.reset();
     },
 
-    // ===== لعب محلي =====
     startLocalGame() {
         this.mode = 'local';
         this.vsComputer = false;
@@ -56,7 +53,7 @@ const GameXO = {
         this.reset();
     },
 
-    // ===== 🆕 بدء اللعب الأونلاين (الحل الصحيح) =====
+    // 🆕 الإصلاح النهائي: استخدام setTimeout للسماح بتحديث DOM
     startOnlineGame(isHost) {
         console.log('🎮 بدء اللعبة الأونلاين - المضيف:', isHost);
         
@@ -66,14 +63,15 @@ const GameXO = {
         const p1Name = isHost ? 'أنت (❌)' : 'الخصم (❌)';
         const p2Name = isHost ? 'الخصم (⭕)' : 'أنت (⭕)';
         
-        // 🆕 الحل: استبدال محتوى gameContainer بالكامل
-        // لأن اللوبي قد يكون استبدل المحتوى الأصلي
         const container = document.getElementById('gameContainer');
         if (!container) {
             console.error('❌ gameContainer غير موجود!');
             return;
         }
         
+        console.log('🔨 إنشاء شاشة اللعبة...');
+        
+        // استبدال محتوى الحاوية
         container.innerHTML = `
             <div class="game-wrapper">
                 <div class="game-header">
@@ -106,13 +104,56 @@ const GameXO = {
             </div>
         `;
         
-        // بدء اللعبة
-        this.reset();
+        console.log('✅ تم إنشاء شاشة اللعبة');
         
-        console.log('✅ تم بدء اللعبة الأونلاين بنجاح');
+        // 🆕 الحل: استخدام setTimeout للسماح للمتصفح بتحديث DOM
+        setTimeout(() => {
+            console.log('🔍 التحقق من وجود العناصر...');
+            
+            const xoBoard = document.getElementById('xoBoard');
+            const xoStatus = document.getElementById('xoStatus');
+            
+            if (!xoBoard) {
+                console.error('❌ xoBoard غير موجود حتى بعد التأخير!');
+                console.log('🔨 محاولة إعادة إنشاء الشاشة...');
+                // محاولة مرة أخرى
+                container.innerHTML = `
+                    <div class="game-wrapper">
+                        <div class="game-header">
+                            <h3 style="color:#4c1d95;">⭕❌ لعبة XO - أونلاين</h3>
+                            <button class="back-btn" onclick="GameXO.exit()">🚪 خروج</button>
+                        </div>
+                        <div class="connection-quality-indicator" id="connectionQuality">
+                            <div class="quality-dot"></div>
+                            <span id="qualityText">متصل</span>
+                        </div>
+                        <div class="player-info">
+                            <div class="player" id="player1Box">
+                                <div class="symbol">❌</div>
+                                <div class="name" id="p1Name">${p1Name}</div>
+                                <div class="score" id="p1Score">${this.scores.X}</div>
+                            </div>
+                            <div class="vs">VS</div>
+                            <div class="player" id="player2Box">
+                                <div class="symbol">⭕</div>
+                                <div class="name" id="p2Name">${p2Name}</div>
+                                <div class="score" id="p2Score">${this.scores.O}</div>
+                            </div>
+                        </div>
+                        <div class="game-status" id="xoStatus">دور اللاعب ❌</div>
+                        <div class="board" id="xoBoard"></div>
+                        <button class="reset-btn" onclick="GameXO.reset()">🔄 جولة جديدة</button>
+                    </div>
+                `;
+            }
+            
+            // بدء اللعبة
+            console.log('🎮 بدء اللعبة...');
+            this.reset();
+            console.log('✅ تم بدء اللعبة الأونلاين بنجاح');
+        }, 100);  // 🆕 تأخير 100 ميلي ثانية
     },
 
-    // ===== دالة مساعدة لعرض منطقة اللعبة (للعب المحلي والكمبيوتر) =====
     showGameArea(p1Name, p2Name) {
         const gameArea = document.getElementById('xoGameArea');
         const modeSelect = document.getElementById('xoModeSelect');
@@ -146,7 +187,6 @@ const GameXO = {
         `;
     },
 
-    // ===== الخروج =====
     exit() {
         const container = document.getElementById('gameContainer');
         if (container) {
@@ -162,7 +202,6 @@ const GameXO = {
         }
     },
 
-    // ===== إعادة التعيين =====
     reset() {
         this.board = Array(9).fill('');
         this.currentTurn = 'X';
@@ -172,11 +211,19 @@ const GameXO = {
         console.log('🔄 تم إعادة تعيين اللعبة');
     },
 
-    // ===== عرض اللوحة =====
     renderBoard() {
         const el = document.getElementById('xoBoard');
         if (!el) {
-            console.warn('⚠️ xoBoard غير موجود بعد');
+            console.warn('⚠️ xoBoard غير موجود - سيتم المحاولة مرة أخرى');
+            // 🆕 محاولة مرة أخرى بعد تأخير قصير
+            setTimeout(() => {
+                const el2 = document.getElementById('xoBoard');
+                if (el2) {
+                    this.renderBoard();
+                } else {
+                    console.error('❌ xoBoard لا يزال غير موجود!');
+                }
+            }, 200);
             return;
         }
         el.innerHTML = '';
@@ -189,7 +236,6 @@ const GameXO = {
         }
     },
 
-    // ===== النقر على خلية =====
     handleClick(i) {
         if (!this.gameActive || this.board[i]) return;
         
@@ -204,7 +250,6 @@ const GameXO = {
         this.makeMove(i);
     },
 
-    // ===== تنفيذ الحركة =====
     makeMove(i) {
         if (!this.gameActive || this.board[i]) return;
         
