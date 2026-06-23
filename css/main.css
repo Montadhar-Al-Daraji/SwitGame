@@ -1,4 +1,7 @@
-/* ===== General ===== */
+/* ============================================
+   main.css - الأنماط العامة
+   ============================================ */
+
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
 body { background: #fef5e7; color: #2d3748; min-height: 100vh; padding-bottom: 30px; }
 
@@ -48,6 +51,48 @@ header p { font-size: 13px; opacity: 0.9; }
     padding-right: 15px; border-right: 5px solid #d97706;
 }
 
+/* ===== Hero Section ===== */
+.hero-section {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white; padding: 40px 20px; border-radius: 20px;
+    text-align: center; margin-bottom: 25px;
+}
+.hero-icon { font-size: 70px; margin-bottom: 15px; }
+.hero-section h2 { font-size: 28px; margin-bottom: 10px; }
+.hero-section p { font-size: 15px; opacity: 0.95; line-height: 1.6; }
+
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px; margin-top: 25px;
+}
+.stat-card {
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+    padding: 20px; border-radius: 15px;
+}
+.stat-icon { font-size: 30px; margin-bottom: 8px; }
+.stat-value { font-size: 32px; font-weight: bold; margin: 5px 0; }
+.stat-label { font-size: 13px; opacity: 0.9; }
+
+/* ===== Quick Actions ===== */
+.quick-actions {
+    display: flex; gap: 15px; flex-wrap: wrap;
+    justify-content: center; margin-top: 20px;
+}
+.action-btn {
+    padding: 15px 30px; border: none; border-radius: 12px;
+    cursor: pointer; font-weight: bold; font-size: 16px;
+    transition: all 0.3s; min-width: 200px;
+}
+.action-btn.primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+.action-btn.secondary {
+    background: white; color: #d97706;
+    border: 2px solid #d97706;
+}
+.action-btn:hover { transform: translateY(-3px); }
+
 /* ===== Modal ===== */
 .modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -88,75 +133,31 @@ header p { font-size: 13px; opacity: 0.9; }
 }
 .privacy-notice h4 { color: #0369a1; margin-bottom: 8px; font-size: 15px; }
 .privacy-notice p { color: #0c4a6e; font-size: 13px; line-height: 1.6; }
-.privacy-notice ul { margin-top: 8px; padding-right: 20px; }
-.privacy-notice li { color: #0c4a6e; font-size: 13px; margin-bottom: 3px; }
 
-/* ===== Device Info Section ===== */
-.device-hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white; padding: 30px; border-radius: 20px; margin-bottom: 25px;
-    text-align: center; position: relative; overflow: hidden;
+/* ===== Forms ===== */
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #374151; }
+.form-group input, .form-group textarea {
+    width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
 }
-.device-hero::before {
-    content: ''; position: absolute; top: -50%; right: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: rotate 15s linear infinite;
-}
-@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.device-hero .icon { font-size: 60px; margin-bottom: 10px; position: relative; }
-.device-hero h2 { font-size: 26px; margin-bottom: 10px; position: relative; }
-.device-hero p { opacity: 0.95; line-height: 1.6; position: relative; }
-.bonus-badge {
-    display: inline-block; background: #10b981; color: white;
-    padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold;
-    margin-top: 12px; position: relative;
+.form-group textarea { resize: vertical; min-height: 70px; }
+
+.confirm-btn {
+    width: 100%; background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: white; border: none; padding: 15px; border-radius: 12px;
+    font-size: 16px; font-weight: bold; cursor: pointer;
 }
 
-.ip-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 16px; padding: 25px; margin-bottom: 25px;
-    color: white; text-align: center; position: relative; overflow: hidden;
-}
-.ip-card .label { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
-.ip-card .ip-value {
-    font-size: 32px; font-weight: bold; letter-spacing: 2px;
-    margin-bottom: 12px; word-break: break-all;
-}
-.copy-btn {
-    background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);
-    color: white; padding: 8px 20px; border-radius: 25px; cursor: pointer;
-    font-size: 14px; transition: all 0.3s;
-}
-.copy-btn:hover { background: rgba(255,255,255,0.3); }
-
-.info-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px; margin-bottom: 20px;
-}
-.info-item {
-    background: white; border: 2px solid #e2e8f0; border-radius: 12px;
-    padding: 18px; transition: all 0.3s; display: flex; align-items: center; gap: 15px;
-}
-.info-item:hover { transform: translateY(-3px); border-color: #667eea; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
-.info-item .emoji { font-size: 32px; flex-shrink: 0; }
-.info-item .details { flex: 1; min-width: 0; }
-.info-item .info-label { font-size: 12px; color: #718096; margin-bottom: 4px; font-weight: 600; }
-.info-item .info-value { font-size: 15px; color: #2d3748; font-weight: 600; word-break: break-word; }
-
-.refresh-btn {
-    display: block; margin: 20px auto 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white; border: none; padding: 12px 30px; border-radius: 25px;
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
+/* ===== Responsive ===== */
 @media (max-width: 600px) {
     header h1 { font-size: 20px; }
     .header-actions { top: 10px; left: 10px; gap: 5px; }
     .icon-btn { width: 38px; height: 38px; font-size: 17px; }
     .tabs { top: 70px; }
     .tab { padding: 12px 5px; font-size: 12px; }
-    .ip-card .ip-value { font-size: 22px; }
+    .hero-section h2 { font-size: 22px; }
+    .stat-value { font-size: 24px; }
+    .quick-actions { flex-direction: column; }
+    .action-btn { width: 100%; }
 }
