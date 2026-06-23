@@ -1,16 +1,15 @@
 // ============================================
-// ===== إعدادات Firebase =====
+// ===== إعدادات Firebase - تم ربطه بمشروعك =====
 // ============================================
 
-// ⚠️ استبدل هذه القيم بقيم مشروعك من Firebase Console
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyD8jLXCopW1Klgm97FdHrY7VzpcrFE2s9s",
+    authDomain: "switgame-a4227.firebaseapp.com",
+    databaseURL: "https://switgame-a4227-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "switgame-a4227",
+    storageBucket: "switgame-a4227.firebasestorage.app",
+    messagingSenderId: "871810794908",
+    appId: "1:871810794908:web:a55a81099041c74b1fb459"
 };
 
 // تهيئة Firebase
@@ -26,3 +25,5 @@ const DB = {
     rewards: () => db.ref('rewards'),
     orders: () => db.ref('orders')
 };
+
+console.log('✅ تم تهيئة Firebase بنجاح');
