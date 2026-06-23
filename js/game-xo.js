@@ -1,5 +1,5 @@
 // ============================================
-// ===== game-xo.js - لعبة XO مع دعم الأونلاين =====
+// ===== game-xo.js - لعبة XO مع دعم الأونلاين (المُصلحة) =====
 // ============================================
 
 const GameXO = {
@@ -35,30 +35,7 @@ const GameXO = {
                     </button>
                 </div>
 
-                <div id="xoGameArea" style="display:none;">
-                    <div class="connection-quality-indicator" id="connectionQuality" style="display:none;">
-                        <div class="quality-dot"></div>
-                        <span id="qualityText">متصل</span>
-                    </div>
-                    
-                    <div class="player-info">
-                        <div class="player" id="player1Box">
-                            <div class="symbol">❌</div>
-                            <div class="name" id="p1Name">لاعب 1</div>
-                            <div class="score" id="p1Score">0</div>
-                        </div>
-                        <div class="vs">VS</div>
-                        <div class="player" id="player2Box">
-                            <div class="symbol">⭕</div>
-                            <div class="name" id="p2Name">لاعب 2</div>
-                            <div class="score" id="p2Score">0</div>
-                        </div>
-                    </div>
-
-                    <div class="game-status" id="xoStatus">دور اللاعب ❌</div>
-                    <div class="board" id="xoBoard"></div>
-                    <button class="reset-btn" onclick="GameXO.reset()">🔄 جولة جديدة</button>
-                </div>
+                <div id="xoGameArea" style="display:none;"></div>
             </div>
         `;
     },
@@ -67,12 +44,7 @@ const GameXO = {
     startComputerGame() {
         this.mode = 'computer';
         this.vsComputer = true;
-        document.getElementById('xoModeSelect').style.display = 'none';
-        document.getElementById('xoGameArea').style.display = 'block';
-        
-        document.getElementById('p1Name').textContent = 'أنت';
-        document.getElementById('p2Name').textContent = 'الكمبيوتر 🤖';
-        
+        this.showGameArea('أنت', 'الكمبيوتر 🤖');
         this.reset();
     },
 
@@ -80,46 +52,76 @@ const GameXO = {
     startLocalGame() {
         this.mode = 'local';
         this.vsComputer = false;
-        document.getElementById('xoModeSelect').style.display = 'none';
-        document.getElementById('xoGameArea').style.display = 'block';
-        
-        document.getElementById('p1Name').textContent = 'لاعب 1';
-        document.getElementById('p2Name').textContent = 'لاعب 2';
-        
+        this.showGameArea('لاعب 1', 'لاعب 2');
         this.reset();
     },
 
-    // ===== بدء اللعب الأونلاين (يُستدعى من PeerGame) =====
+    // ===== 🆕 بدء اللعب الأونلاين (يُستدعى من PeerGame بعد الاتصال) =====
     startOnlineGame(isHost) {
         console.log('🎮 بدء اللعبة الأونلاين - المضيف:', isHost);
         
         this.mode = 'online';
         this.vsComputer = false;
         
-        const modeSelect = document.getElementById('xoModeSelect');
-        const gameArea = document.getElementById('xoGameArea');
+        const p1Name = isHost ? 'أنت (❌)' : 'الخصم (❌)';
+        const p2Name = isHost ? 'الخصم (⭕)' : 'أنت (⭕)';
         
-        if (modeSelect) modeSelect.style.display = 'none';
-        if (gameArea) gameArea.style.display = 'block';
+        // 🆕 استبدال كامل لمحتوى منطقة اللعبة
+        this.showGameArea(p1Name, p2Name);
         
+        // إظهار مؤشر جودة الاتصال
         const qualityEl = document.getElementById('connectionQuality');
         if (qualityEl) qualityEl.style.display = 'flex';
         
-        if (isHost) {
-            document.getElementById('p1Name').textContent = 'أنت (❌)';
-            document.getElementById('p2Name').textContent = 'الخصم (⭕)';
-        } else {
-            document.getElementById('p1Name').textContent = 'الخصم (❌)';
-            document.getElementById('p2Name').textContent = 'أنت (⭕)';
-        }
-        
+        // بدء اللعبة
         this.reset();
+        
+        console.log('✅ تم بدء اللعبة الأونلاين بنجاح');
+    },
+
+    // ===== 🆕 دالة مساعدة لعرض منطقة اللعبة =====
+    showGameArea(p1Name, p2Name) {
+        const gameArea = document.getElementById('xoGameArea');
+        if (!gameArea) return;
+        
+        gameArea.style.display = 'block';
+        gameArea.innerHTML = `
+            <div class="connection-quality-indicator" id="connectionQuality" style="display:none;">
+                <div class="quality-dot"></div>
+                <span id="qualityText">متصل</span>
+            </div>
+            
+            <div class="player-info">
+                <div class="player" id="player1Box">
+                    <div class="symbol">❌</div>
+                    <div class="name" id="p1Name">${p1Name}</div>
+                    <div class="score" id="p1Score">${this.scores.X}</div>
+                </div>
+                <div class="vs">VS</div>
+                <div class="player" id="player2Box">
+                    <div class="symbol">⭕</div>
+                    <div class="name" id="p2Name">${p2Name}</div>
+                    <div class="score" id="p2Score">${this.scores.O}</div>
+                </div>
+            </div>
+
+            <div class="game-status" id="xoStatus">دور اللاعب ❌</div>
+            <div class="board" id="xoBoard"></div>
+            <button class="reset-btn" onclick="GameXO.reset()">🔄 جولة جديدة</button>
+        `;
+        
+        // إخفاء قائمة الأوضاع إذا كانت موجودة
+        const modeSelect = document.getElementById('xoModeSelect');
+        if (modeSelect) modeSelect.style.display = 'none';
     },
 
     // ===== الخروج =====
     exit() {
         const container = document.getElementById('gameContainer');
-        if (container) container.style.display = 'none';
+        if (container) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+        }
         this.gameActive = false;
         this.mode = null;
         
@@ -135,12 +137,16 @@ const GameXO = {
         this.gameActive = true;
         this.renderBoard();
         this.updateTurnUI();
+        console.log('🔄 تم إعادة تعيين اللعبة');
     },
 
     // ===== عرض اللوحة =====
     renderBoard() {
         const el = document.getElementById('xoBoard');
-        if (!el) return;
+        if (!el) {
+            console.error('❌ عنصر xoBoard غير موجود!');
+            return;
+        }
         el.innerHTML = '';
         for (let i = 0; i < 9; i++) {
             const c = document.createElement('div');
