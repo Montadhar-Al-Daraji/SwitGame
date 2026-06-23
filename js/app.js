@@ -1,12 +1,11 @@
 // ============================================
-// ===== App - التطبيق الرئيسي (النسخة الجديدة) =====
+// ===== app.js - التطبيق الرئيسي =====
 // ============================================
 
 const App = {
     init() {
         console.log('🚀 جاري تشغيل منصة عالم الألعاب...');
         
-        // تهيئة نظام النقاط
         try {
             Points.init();
             console.log('✅ تم تهيئة نظام النقاط');
@@ -14,7 +13,6 @@ const App = {
             console.error('❌ خطأ في Points:', e);
         }
         
-        // تهيئة بيانات المستخدم
         try {
             UserData.init();
             console.log('✅ تم تهيئة بيانات المستخدم');
@@ -22,8 +20,10 @@ const App = {
             console.error('❌ خطأ في UserData:', e);
         }
         
-        // تحديث الإحصائيات
         this.updateHomeStats();
+        
+        // بدء مراقبة تحديثات الموقع
+        this.startLocationMonitoring();
         
         console.log('✅ التطبيق جاهز!');
     },
@@ -40,6 +40,7 @@ const App = {
         
         if (name === 'points') Points.renderRewards();
         if (name === 'home') this.updateHomeStats();
+        if (name === 'location') this.updateLocationTab();
         if (name === 'games') {
             const container = document.getElementById('gameContainer');
             if (container) container.style.display = 'none';
@@ -57,9 +58,173 @@ const App = {
         if (gamesEl) gamesEl.textContent = gamesPlayed;
         if (pointsEl) pointsEl.textContent = Points.userPoints || 0;
         if (rewardsEl) rewardsEl.textContent = rewardsEarned;
+    },
+
+    // ===== مراقبة تحديثات الموقع =====
+    startLocationMonitoring() {
+        setInterval(() => {
+            this.updateLocationBadge();
+        }, 3000);
+    },
+
+    updateLocationBadge() {
+        const badge = document.getElementById('locationAccuracyBadge');
+        const btn = document.getElementById('locationStatusBtn');
+        
+        if (!UserData.location) {
+            if (badge) {
+                badge.textContent = '-';
+                badge.style.background = '#6b7280';
+            }
+            return;
+        }
+        
+        const accuracy = UserData.location.accuracy;
+        if (badge) {
+            badge.textContent = `${accuracy}م`;
+            
+            if (accuracy <= 10) {
+                badge.style.background = '#10b981'; // أخضر - ممتاز
+            } else if (accuracy <= 20) {
+                badge.style.background = '#3b82f6'; // أزرق - جيد
+            } else if (accuracy <= 50) {
+                badge.style.background = '#f59e0b'; // برتقالي - مقبول
+            } else {
+                badge.style.background = '#ef4444'; // أحمر - ضعيف
+            }
+        }
+    },
+
+    // ===== تحديث تبويب الموقع =====
+    updateLocationTab() {
+        const statusIcon = document.getElementById('locationStatusIcon');
+        const statusTitle = document.getElementById('locationStatusTitle');
+        const statusDesc = document.getElementById('locationStatusDesc');
+        const accuracyValue = document.getElementById('accuracyValue');
+        const accuracyFill = document.getElementById('accuracyFill');
+        const accuracyHint = document.getElementById('accuracyHint');
+        const locationDetails = document.getElementById('locationDetails');
+        
+        if (!UserData.location) {
+            if (statusIcon) statusIcon.textContent = '⏳';
+            if (statusTitle) statusTitle.textContent = 'جاري تحديد الموقع...';
+            if (statusDesc) statusDesc.textContent = 'يرجى الانتظار';
+            if (accuracyValue) accuracyValue.textContent = '-';
+            if (accuracyFill) accuracyFill.style.width = '0%';
+            if (accuracyHint) accuracyHint.textContent = 'جاري التحسين...';
+            return;
+        }
+        
+        const loc = UserData.location;
+        const accuracy = loc.accuracy;
+        
+        // تحديث الأيقونة والعنوان
+        if (statusIcon) {
+            statusIcon.textContent = accuracy <= 10 ? '🎯' : 
+                                     accuracy <= 20 ? '✅' : 
+                                     accuracy <= 50 ? '📍' : '⚠️';
+        }
+        
+        if (statusTitle) {
+            statusTitle.textContent = accuracy <= 10 ? 'موقع دقيق جداً!' :
+                                      accuracy <= 20 ? 'موقعك محدد بدقة' :
+                                      accuracy <= 50 ? 'موقعك محدد' : 'موقع تقريبي';
+        }
+        
+        if (statusDesc) {
+            statusDesc.textContent = `الدقة: ${accuracy} متر`;
+        }
+        
+        // تحديث مقياس الدقة
+        if (accuracyValue) accuracyValue.textContent = `${accuracy} متر`;
+        
+        if (accuracyFill) {
+            const percentage = Math.max(5, Math.min(100, 100 - (accuracy / 2)));
+            accuracyFill.style.width = percentage + '%';
+            
+            if (accuracy <= 10) {
+                accuracyFill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+            } else if (accuracy <= 20) {
+                accuracyFill.style.background = 'linear-gradient(90deg, #3b82f6, #1e40af)';
+            } else if (accuracy <= 50) {
+                accuracyFill.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+            } else {
+                accuracyFill.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+            }
+        }
+        
+        if (accuracyHint) {
+            accuracyHint.textContent = accuracy <= 10 ? '🎯 ممتاز - مثل GPS احترافي' :
+                                       accuracy <= 20 ? '✅ جيد جداً - مناسب للتوصيل' :
+                                       accuracy <= 50 ? '📍 مقبول - جاري التحسين' :
+                                       '⚠️ ضعيف - حاول الخروج إلى مكان مفتوح';
+        }
+        
+        // تحديث التفاصيل
+        if (locationDetails) {
+            locationDetails.style.display = 'block';
+            document.getElementById('latValue').textContent = loc.lat.toFixed(6);
+            document.getElementById('lngValue').textContent = loc.lng.toFixed(6);
+            document.getElementById('readingsCount').textContent = loc.readingsCount || 1;
+            document.getElementById('lastUpdate').textContent = 
+                new Date(loc.timestamp).toLocaleTimeString('ar');
+        }
     }
 };
 
+// ===== دالة عرض الموقع على الخريطة =====
+function showLocationOnMap() {
+    const mapDiv = document.getElementById('locationMap');
+    if (!mapDiv) return;
+    
+    mapDiv.style.display = 'block';
+    
+    if (!UserData.location) {
+        Utils.showToast('⚠️ الموقع غير محدد بعد', 'warning');
+        return;
+    }
+    
+    const loc = UserData.location;
+    
+    if (!window.userMap) {
+        window.userMap = L.map('locationMap').setView([loc.lat, loc.lng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(window.userMap);
+        
+        window.userMarker = L.marker([loc.lat, loc.lng]).addTo(window.userMap)
+            .bindPopup(`📍 موقعك الحالي<br>الدقة: ${loc.accuracy}م`)
+            .openPopup();
+        
+        // إضافة دائرة الدقة
+        window.accuracyCircle = L.circle([loc.lat, loc.lng], {
+            color: '#3b82f6',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.2,
+            radius: loc.accuracy
+        }).addTo(window.userMap);
+    } else {
+        window.userMap.setView([loc.lat, loc.lng], 17);
+        window.userMarker.setLatLng([loc.lat, loc.lng]);
+        window.accuracyCircle.setLatLng([loc.lat, loc.lng]);
+        window.accuracyCircle.setRadius(loc.accuracy);
+    }
+    
+    setTimeout(() => window.userMap.invalidateSize(), 100);
+}
+
+// تحديث الخريطة كل 3 ثواني إذا كانت ظاهرة
+setInterval(() => {
+    if (window.userMap && UserData.location) {
+        const loc = UserData.location;
+        window.userMarker.setLatLng([loc.lat, loc.lng]);
+        window.userMarker.setPopupContent(`📍 موقعك الحالي<br>الدقة: ${loc.accuracy}م`);
+        window.accuracyCircle.setLatLng([loc.lat, loc.lng]);
+        window.accuracyCircle.setRadius(loc.accuracy);
+    }
+}, 3000);
+
+// ===== بدء التشغيل =====
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
 });
