@@ -9,7 +9,6 @@ const GameXO = {
     gameActive: false,
     mode: null, // 'local', 'computer', 'online'
     vsComputer: false,
-    moveHistory: [],
 
     // ===== بدء اللعبة - اختيار الوضع =====
     start() {
@@ -37,6 +36,11 @@ const GameXO = {
                 </div>
 
                 <div id="xoGameArea" style="display:none;">
+                    <div class="connection-quality-indicator" id="connectionQuality" style="display:none;">
+                        <div class="quality-dot"></div>
+                        <span id="qualityText">متصل</span>
+                    </div>
+                    
                     <div class="player-info">
                         <div class="player" id="player1Box">
                             <div class="symbol">❌</div>
@@ -85,42 +89,23 @@ const GameXO = {
         this.reset();
     },
 
-    // ===== عرض شاشة اللعبة =====
-    showScreen() {
-        const container = document.getElementById('gameContainer');
-        if (!container) return;
+    // ===== بدء اللعب الأونلاين (يُستدعى من PeerGame) =====
+    startOnlineGame(isHost) {
+        this.mode = 'online';
+        this.vsComputer = false;
+        document.getElementById('xoModeSelect').style.display = 'none';
+        document.getElementById('xoGameArea').style.display = 'block';
         
-        container.innerHTML = `
-            <div class="game-wrapper">
-                <div class="game-header">
-                    <h3 style="color:#4c1d95;">⭕❌ لعبة XO - أونلاين</h3>
-                    <button class="back-btn" onclick="GameXO.exit()">🚪 خروج</button>
-                </div>
-                
-                <div class="connection-quality-indicator" id="connectionQuality">
-                    <div class="quality-dot" style="background:#10b981;"></div>
-                    <span>متصل</span>
-                </div>
-                
-                <div class="player-info">
-                    <div class="player" id="player1Box">
-                        <div class="symbol">❌</div>
-                        <div class="name" id="p1Name">لاعب 1</div>
-                        <div class="score" id="p1Score">0</div>
-                    </div>
-                    <div class="vs">VS</div>
-                    <div class="player" id="player2Box">
-                        <div class="symbol">⭕</div>
-                        <div class="name" id="p2Name">لاعب 2</div>
-                        <div class="score" id="p2Score">0</div>
-                    </div>
-                </div>
-
-                <div class="game-status" id="xoStatus">دور اللاعب ❌</div>
-                <div class="board" id="xoBoard"></div>
-                <button class="reset-btn" onclick="GameXO.reset()">🔄 جولة جديدة</button>
-            </div>
-        `;
+        const qualityEl = document.getElementById('connectionQuality');
+        if (qualityEl) qualityEl.style.display = 'flex';
+        
+        if (isHost) {
+            document.getElementById('p1Name').textContent = 'أنت (❌)';
+            document.getElementById('p2Name').textContent = 'الخصم (⭕)';
+        } else {
+            document.getElementById('p1Name').textContent = 'الخصم (❌)';
+            document.getElementById('p2Name').textContent = 'أنت (⭕)';
+        }
         
         this.reset();
     },
@@ -142,16 +127,6 @@ const GameXO = {
         this.board = Array(9).fill('');
         this.currentTurn = 'X';
         this.gameActive = true;
-        this.moveHistory = [];
-        this.renderBoard();
-        this.updateTurnUI();
-    },
-
-    // ===== مزامنة الحالة (للأونلاين) =====
-    syncState(state) {
-        if (state.board) this.board = [...state.board];
-        if (state.currentTurn) this.currentTurn = state.currentTurn;
-        if (typeof state.gameActive !== 'undefined') this.gameActive = state.gameActive;
         this.renderBoard();
         this.updateTurnUI();
     },
@@ -184,15 +159,14 @@ const GameXO = {
             PeerGame.sendMove(i);
         }
         
-        this.makeMove(i, true);
+        this.makeMove(i);
     },
 
     // ===== تنفيذ الحركة =====
-    makeMove(i, isLocal = true) {
+    makeMove(i) {
         if (!this.gameActive || this.board[i]) return;
         
         this.board[i] = this.currentTurn;
-        this.moveHistory.push({ player: this.currentTurn, index: i });
         this.renderBoard();
         
         const w = this.checkWin();
@@ -215,13 +189,18 @@ const GameXO = {
             if (this.mode === 'local') {
                 Points.add(10, 'فوز في XO');
             } else if (this.mode === 'online' && winner === PeerGame.mySymbol) {
-                Points.add(10, 'فوز في XO أونلاين');
+                Points.add(15, 'فوز في XO أونلاين');
             } else if (this.mode === 'computer' && winner === 'X') {
                 Points.add(10, 'فوز على الكمبيوتر');
             }
             
             setTimeout(() => {
-                if (confirm(`فاز ${name}! جولة جديدة؟`)) this.reset();
+                if (confirm(`فاز ${name}! جولة جديدة؟`)) {
+                    this.reset();
+                    if (this.mode === 'online' && PeerGame.isHost) {
+                        PeerGame.send({ type: 'restart' });
+                    }
+                }
             }, 800);
             return;
         }
@@ -232,7 +211,12 @@ const GameXO = {
             if (status) status.textContent = '🤝 تعادل!';
             Points.add(3, 'تعادل في XO');
             setTimeout(() => {
-                if (confirm('تعادل! جولة جديدة؟')) this.reset();
+                if (confirm('تعادل! جولة جديدة؟')) {
+                    this.reset();
+                    if (this.mode === 'online' && PeerGame.isHost) {
+                        PeerGame.send({ type: 'restart' });
+                    }
+                }
             }, 800);
             return;
         }
@@ -313,4 +297,6 @@ const GameXO = {
         if (this.mode === 'local') return symbol === 'X' ? 'لاعب 1' : 'لاعب 2';
         if (this.mode === 'computer') return symbol === 'X' ? 'أنت' : 'الكمبيوتر';
         if (this.mode === 'online') return symbol === PeerGame.mySymbol ? 'أنت' : 'الخصم';
-        return 'لاعب
+        return 'لاعب';
+    }
+};
