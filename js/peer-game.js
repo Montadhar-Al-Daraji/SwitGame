@@ -9,19 +9,12 @@ const PeerGame = {
     mySymbol: 'X',
     currentCode: null,
     
-    // ===== إعدادات الاتصال الذكي =====
+    // إعدادات الاتصال الذكي
     reconnectAttempts: 0,
     maxReconnectAttempts: 5,
     reconnectDelay: 2000,
     heartbeatInterval: null,
-    lastPingTime: 0,
-    connectionQuality: 'excellent', // excellent, good, fair, poor
     latency: 0,
-    
-    // ===== حالة اللعبة =====
-    gameState: null,
-    pendingMoves: [],
-    isReconnecting: false,
     
     // ===== عرض اللوبي =====
     showLobby() {
@@ -34,11 +27,6 @@ const PeerGame = {
                 <div class="game-header">
                     <h3 style="color:#4c1d95;">🌍 اللعب العالمي</h3>
                     <button class="back-btn" onclick="PeerGame.exitLobby()">🚪 خروج</button>
-                </div>
-                
-                <div class="connection-quality-indicator" id="connectionQuality">
-                    <div class="quality-dot"></div>
-                    <span>جاهز للاتصال</span>
                 </div>
                 
                 <div class="lobby-sections">
@@ -84,8 +72,7 @@ const PeerGame = {
     // ===== الخروج من اللوبي =====
     exitLobby() {
         this.cleanup();
-        const container = document.getElementById('gameContainer');
-        if (container) container.style.display = 'none';
+        GameXO.exit();
     },
     
     // ===== استخراج الكود من الرابط =====
@@ -113,7 +100,7 @@ const PeerGame = {
         this.showConnectionStatus('hostStatus', 'connecting', '⏳ جاري إنشاء الغرفة...');
         
         try {
-            this.peer = new Peer('switgame-' + code, {
+            this.peer = new Peer('xo-game-' + code, {
                 debug: 0,
                 config: {
                     iceServers: [
@@ -121,10 +108,7 @@ const PeerGame = {
                         { urls: 'stun:stun1.l.google.com:19302' },
                         { urls: 'stun:stun2.l.google.com:19302' },
                         { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun4.l.google.com:19302' },
-                        { urls: 'turn:openrelay.metered.ca:80',
-                          username: 'openrelayproject',
-                          credential: 'openrelayproject' }
+                        { urls: 'stun:stun4.l.google.com:19302' }
                     ]
                 }
             });
@@ -179,7 +163,7 @@ const PeerGame = {
                     </div>
                 </div>
                 
-                <div class="connection-status connecting" id="hostStatus">
+                <div class="connection-status connecting" id="hostStatus" style="display:block;">
                     ⏳ في انتظار انضمام لاعب آخر...
                 </div>
             </div>
@@ -210,17 +194,14 @@ const PeerGame = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'turn:openrelay.metered.ca:80',
-                          username: 'openrelayproject',
-                          credential: 'openrelayproject' }
+                        { urls: 'stun:stun2.l.google.com:19302' }
                     ]
                 }
             });
             
             this.peer.on('open', () => {
                 console.log('🔗 جاري الاتصال بالغرفة:', code);
-                this.conn = this.peer.connect('switgame-' + code, { 
+                this.conn = this.peer.connect('xo-game-' + code, { 
                     reliable: true,
                     serialization: 'json'
                 });
@@ -261,15 +242,7 @@ const PeerGame = {
             });
             
             setTimeout(() => {
-                GameXO.mode = 'online';
-                GameXO.showScreen();
-                setTimeout(() => {
-                    const p1 = document.getElementById('p1Name');
-                    const p2 = document.getElementById('p2Name');
-                    if (p1) p1.textContent = this.isHost ? 'أنت (❌)' : 'الخصم (❌)';
-                    if (p2) p2.textContent = this.isHost ? 'الخصم (⭕)' : 'أنت (⭕)';
-                }, 50);
-                
+                GameXO.startOnlineGame(this.isHost);
                 if (this.isHost) {
                     GameXO.reset();
                     this.send({ type: 'gameStart' });
@@ -282,6 +255,7 @@ const PeerGame = {
         this.conn.on('close', () => {
             console.warn('🔌 انقطع الاتصال');
             this.stopHeartbeat();
+            Utils.showToast('❌ انقطع الاتصال بالخصم', 'error');
             this.attemptReconnect();
         });
         
@@ -303,10 +277,8 @@ const PeerGame = {
                 break;
                 
             case 'heartbeat':
-                // قياس زمن الاستجابة
                 this.latency = now - data.timestamp;
                 this.updateConnectionQuality();
-                // إرسال رد
                 this.send({ 
                     type: 'heartbeat_ack', 
                     timestamp: now,
@@ -320,27 +292,12 @@ const PeerGame = {
                 break;
                 
             case 'move':
-                GameXO.makeMove(data.index, false);
+                GameXO.makeMove(data.index);
                 break;
                 
             case 'gameStart':
-                GameXO.reset();
-                break;
-                
             case 'restart':
                 GameXO.reset();
-                break;
-                
-            case 'chat':
-                Utils.showToast(`💬 ${data.message}`, 'info');
-                break;
-                
-            case 'sync':
-                // مزامنة حالة اللعبة
-                if (data.gameState) {
-                    this.gameState = data.gameState;
-                    GameXO.syncState(data.gameState);
-                }
                 break;
         }
     },
@@ -353,14 +310,10 @@ const PeerGame = {
                 return true;
             } catch (error) {
                 console.error('❌ فشل الإرسال:', error);
-                this.pendingMoves.push(data);
                 return false;
             }
-        } else {
-            // حفظ في قائمة الانتظار
-            this.pendingMoves.push(data);
-            return false;
         }
+        return false;
     },
     
     // ===== إرسال حركة =====
@@ -372,7 +325,7 @@ const PeerGame = {
         });
     },
     
-    // ===== نظام Heartbeat للكشف عن الانقطاع =====
+    // ===== نظام Heartbeat =====
     startHeartbeat() {
         this.stopHeartbeat();
         this.heartbeatInterval = setInterval(() => {
@@ -380,7 +333,7 @@ const PeerGame = {
                 type: 'heartbeat', 
                 timestamp: Date.now() 
             });
-        }, 3000); // كل 3 ثواني
+        }, 3000);
     },
     
     stopHeartbeat() {
@@ -392,47 +345,28 @@ const PeerGame = {
     
     // ===== تحديث جودة الاتصال =====
     updateConnectionQuality() {
-        const qualityEl = document.getElementById('connectionQuality');
-        if (!qualityEl) return;
-        
-        let quality, color, text;
+        const qualityText = document.getElementById('qualityText');
+        if (!qualityText) return;
         
         if (this.latency < 50) {
-            quality = 'excellent';
-            color = '#10b981';
-            text = `🎯 اتصال ممتاز (${this.latency}ms)`;
+            qualityText.textContent = `🎯 اتصال ممتاز (${this.latency}ms)`;
         } else if (this.latency < 150) {
-            quality = 'good';
-            color = '#3b82f6';
-            text = `✅ اتصال جيد (${this.latency}ms)`;
+            qualityText.textContent = `✅ اتصال جيد (${this.latency}ms)`;
         } else if (this.latency < 500) {
-            quality = 'fair';
-            color = '#f59e0b';
-            text = `📶 اتصال مقبول (${this.latency}ms)`;
+            qualityText.textContent = `📶 اتصال مقبول (${this.latency}ms)`;
         } else {
-            quality = 'poor';
-            color = '#ef4444';
-            text = `⚠️ اتصال ضعيف (${this.latency}ms)`;
+            qualityText.textContent = `⚠️ اتصال ضعيف (${this.latency}ms)`;
         }
-        
-        this.connectionQuality = quality;
-        qualityEl.innerHTML = `
-            <div class="quality-dot" style="background:${color};"></div>
-            <span>${text}</span>
-        `;
     },
     
     // ===== إعادة الاتصال الذكي =====
     attemptReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             Utils.showToast('❌ تعذر إعادة الاتصال', 'error');
-            setTimeout(() => GameXO.exit(), 2000);
             return;
         }
         
-        this.isReconnecting = true;
         this.reconnectAttempts++;
-        
         const delay = this.reconnectDelay * this.reconnectAttempts;
         Utils.showToast(`🔄 محاولة إعادة الاتصال (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`, 'info');
         
@@ -443,12 +377,8 @@ const PeerGame = {
             }
             
             try {
-                if (this.isHost) {
-                    // المضيف ينتظر اتصال جديد
-                    console.log('🔄 المضيف ينتظر اتصال جديد...');
-                } else {
-                    // اللاعب يحاول الانضمام مرة أخرى
-                    this.conn = this.peer.connect('switgame-' + this.currentCode, { 
+                if (!this.isHost) {
+                    this.conn = this.peer.connect('xo-game-' + this.currentCode, { 
                         reliable: true,
                         serialization: 'json'
                     });
@@ -468,21 +398,15 @@ const PeerGame = {
         
         switch(err.type) {
             case 'unavailable-id':
-                message += 'الكود مستخدم بالفعل، جرب كود آخر';
+                message += 'الكود مستخدم بالفعل';
                 break;
             case 'peer-unavailable':
-                message += 'الغرفة غير موجودة أو منتهية';
+                message += 'الغرفة غير موجودة';
                 break;
             case 'network':
                 message += 'مشكلة في الشبكة';
                 this.attemptReconnect();
                 return;
-            case 'server-error':
-                message += 'خطأ في الخادم';
-                break;
-            case 'socket-error':
-                message += 'خطأ في الاتصال';
-                break;
             default:
                 message += err.type;
         }
@@ -547,8 +471,6 @@ const PeerGame = {
         
         this.currentCode = null;
         this.reconnectAttempts = 0;
-        this.pendingMoves = [];
-        this.isReconnecting = false;
         
         // تنظيف الرابط
         if (window.history.replaceState) {
