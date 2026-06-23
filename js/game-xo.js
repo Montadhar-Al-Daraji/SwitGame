@@ -91,10 +91,16 @@ const GameXO = {
 
     // ===== بدء اللعب الأونلاين (يُستدعى من PeerGame) =====
     startOnlineGame(isHost) {
+        console.log('🎮 بدء اللعبة الأونلاين - المضيف:', isHost);
+        
         this.mode = 'online';
         this.vsComputer = false;
-        document.getElementById('xoModeSelect').style.display = 'none';
-        document.getElementById('xoGameArea').style.display = 'block';
+        
+        const modeSelect = document.getElementById('xoModeSelect');
+        const gameArea = document.getElementById('xoGameArea');
+        
+        if (modeSelect) modeSelect.style.display = 'none';
+        if (gameArea) gameArea.style.display = 'block';
         
         const qualityEl = document.getElementById('connectionQuality');
         if (qualityEl) qualityEl.style.display = 'flex';
