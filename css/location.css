@@ -1,30 +1,129 @@
 /* ============================================
-   location.css - أنماط تحديد الموقع
+   location.css - أنماط تحديد الموقع المحسّنة
    ============================================ */
 
-.location-info {
-    background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px;
-    padding: 15px; margin-bottom: 15px;
+.location-hero {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    color: white; padding: 30px; border-radius: 20px;
+    text-align: center; margin-bottom: 25px;
 }
-.location-info h3 { color: #1e40af; margin-bottom: 8px; }
-.location-info p { color: #1e3a8a; font-size: 14px; line-height: 1.6; }
+.location-icon { font-size: 60px; margin-bottom: 10px; }
+.location-hero h2 { font-size: 26px; margin-bottom: 10px; }
+.location-hero p { opacity: 0.95; font-size: 15px; }
 
-.location-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-.loc-btn {
-    flex: 1; padding: 12px; border-radius: 10px; border: 2px solid;
-    cursor: pointer; font-weight: 600; font-size: 14px;
+.location-status-card {
+    background: white; padding: 25px; border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08); margin-bottom: 20px;
 }
-.loc-btn.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
-.loc-btn.secondary { background: white; color: #6b7280; border-color: #d1d5db; }
 
-#map { height: 300px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #e5e7eb; }
+.status-header {
+    display: flex; align-items: center; gap: 15px;
+    margin-bottom: 20px; padding-bottom: 15px;
+    border-bottom: 2px solid #f3f4f6;
+}
 
-.status-msg { padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; display: none; }
-.status-msg.show { display: block; }
-.status-msg.success { background: #d1fae5; color: #065f46; }
-.status-msg.error { background: #fee2e2; color: #991b1b; }
-.status-msg.info { background: #dbeafe; color: #1e40af; }
+.status-icon {
+    font-size: 40px; width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    background: #eff6ff; border-radius: 15px;
+}
 
+.status-header h3 {
+    color: #1f2937; font-size: 18px; margin-bottom: 3px;
+}
+
+.status-header p {
+    color: #6b7280; font-size: 13px;
+}
+
+/* ===== مقياس الدقة ===== */
+.accuracy-meter {
+    background: #f9fafb; padding: 20px; border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.accuracy-label {
+    display: flex; justify-content: space-between;
+    margin-bottom: 10px; font-size: 14px; color: #374151;
+}
+
+.accuracy-label strong {
+    color: #10b981; font-size: 16px;
+}
+
+.accuracy-bar {
+    height: 10px; background: #e5e7eb; border-radius: 5px;
+    overflow: hidden; margin-bottom: 8px;
+}
+
+.accuracy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 5px; transition: width 0.5s ease;
+}
+
+.accuracy-hint {
+    font-size: 12px; color: #6b7280; text-align: center;
+}
+
+/* ===== تفاصيل الموقع ===== */
+.location-details {
+    background: #f9fafb; padding: 15px; border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    display: flex; justify-content: space-between;
+    padding: 10px; border-bottom: 1px solid #e5e7eb;
+    font-size: 13px;
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.detail-row span { color: #6b7280; }
+.detail-row strong { color: #1f2937; font-family: monospace; }
+
+/* ===== أزرار الموقع ===== */
+.location-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+}
+
+.location-actions .action-btn {
+    flex: 1; min-width: 150px;
+}
+
+/* ===== بطاقة الخصوصية ===== */
+.privacy-card {
+    background: #eff6ff; padding: 20px; border-radius: 15px;
+    border: 2px solid #3b82f6; margin-top: 20px;
+}
+
+.privacy-card h3 {
+    color: #1e40af; margin-bottom: 12px; font-size: 16px;
+}
+
+.privacy-card ul {
+    list-style: none; padding: 0;
+}
+
+.privacy-card li {
+    padding: 8px 0; color: #1e3a8a; font-size: 14px;
+    line-height: 1.6;
+}
+
+/* ===== شارة الدقة في الهيدر ===== */
+#locationAccuracyBadge {
+    font-size: 9px; padding: 2px 6px;
+    min-width: 30px; height: 18px;
+}
+
+/* ===== التجاوب ===== */
 @media (max-width: 600px) {
+    .location-hero { padding: 20px; }
+    .location-hero h2 { font-size: 22px; }
+    .location-status-card { padding: 15px; }
+    .status-icon { font-size: 30px; width: 50px; height: 50px; }
+    .status-header h3 { font-size: 16px; }
     .location-actions { flex-direction: column; }
+    .location-actions .action-btn { width: 100%; }
 }
