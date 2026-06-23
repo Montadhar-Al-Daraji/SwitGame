@@ -1,161 +1,444 @@
-/* ===== Game Intro ===== */
-.game-intro {
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-    color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;
-    text-align: center; position: relative; overflow: hidden;
-}
-.game-intro::before {
-    content: ''; position: absolute; top: -50%; right: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: rotate 15s linear infinite;
-}
-.game-intro h2 { font-size: 26px; margin-bottom: 10px; position: relative; }
-.game-intro p { font-size: 15px; opacity: 0.95; line-height: 1.6; position: relative; }
+/* ============================================
+   games.css - أنماط الألعاب
+   ============================================ */
 
-/* ===== Game Modes ===== */
-.game-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
-.mode-card {
-    background: white; border-radius: 16px; padding: 25px; text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08); cursor: pointer;
-    transition: all 0.3s; border: 3px solid transparent;
+/* ===== حاوية اللعبة ===== */
+.game-wrapper {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    max-width: 500px;
+    margin: 20px auto;
 }
-.mode-card:hover { transform: translateY(-5px); border-color: #8b5cf6; }
-.mode-card .icon { font-size: 50px; margin-bottom: 10px; }
-.mode-card h3 { color: #4c1d95; margin-bottom: 8px; font-size: 18px; }
-.mode-card p { color: #6b7280; font-size: 13px; line-height: 1.5; }
 
-/* ===== Game Container ===== */
-.game-container {
-    background: white; border-radius: 20px; padding: 25px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto;
-}
 .game-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f3f4f6;
 }
+
+.game-header h3 {
+    color: #4c1d95;
+    font-size: 22px;
+}
+
 .back-btn {
-    background: #f3f4f6; border: none; padding: 8px 15px; border-radius: 20px;
-    cursor: pointer; font-weight: 600; color: #4b5563;
+    background: #f3f4f6;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4b5563;
+    transition: all 0.3s;
 }
-.back-btn:hover { background: #e5e7eb; }
 
+.back-btn:hover {
+    background: #e5e7eb;
+    transform: translateY(-2px);
+}
+
+/* ===== اختيار وضع اللعبة ===== */
+.game-mode-select {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 15px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+
+.mode-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* ===== معلومات اللاعبين ===== */
 .player-info {
-    display: flex; justify-content: space-around; margin-bottom: 20px;
-    background: #f9fafb; padding: 15px; border-radius: 12px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 20px;
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 12px;
 }
+
 .player {
-    text-align: center; padding: 10px 20px; border-radius: 10px;
-    transition: all 0.3s; min-width: 120px;
+    text-align: center;
+    padding: 10px 20px;
+    border-radius: 10px;
+    transition: all 0.3s;
+    min-width: 100px;
 }
-.player.active { background: #8b5cf6; color: white; transform: scale(1.05); }
-.player .symbol { font-size: 32px; font-weight: bold; }
-.player .name { font-size: 13px; margin-top: 3px; }
-.player .score { font-size: 18px; font-weight: bold; margin-top: 5px; }
 
+.player.active {
+    background: #8b5cf6;
+    color: white;
+    transform: scale(1.05);
+}
+
+.player .symbol {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.player .name {
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+.player .score {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.vs {
+    font-size: 20px;
+    font-weight: bold;
+    color: #9ca3af;
+}
+
+/* ===== لوحة XO ===== */
 .board {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-    background: #e5e7eb; padding: 8px; border-radius: 12px; margin-bottom: 15px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: #e5e7eb;
+    padding: 8px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    max-width: 350px;
+    margin-left: auto;
+    margin-right: auto;
 }
+
 .cell {
-    aspect-ratio: 1; background: white; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 50px; font-weight: bold; cursor: pointer;
-    transition: all 0.2s; user-select: none;
+    aspect-ratio: 1;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
 }
-.cell:hover:not(.taken) { background: #f3f4f6; transform: scale(0.97); }
-.cell.taken { cursor: not-allowed; }
-.cell.x { color: #8b5cf6; }
-.cell.o { color: #ec4899; }
-.cell.win { background: #fef3c7; animation: winPulse 0.6s ease; }
-@keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
+.cell:hover:not(.taken) {
+    background: #f3f4f6;
+    transform: scale(0.97);
+}
+
+.cell.taken {
+    cursor: not-allowed;
+}
+
+.cell.x {
+    color: #8b5cf6;
+}
+
+.cell.o {
+    color: #ec4899;
+}
+
+.cell.win {
+    background: #fef3c7;
+    animation: winPulse 0.6s ease;
+}
+
+@keyframes winPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ===== حالة اللعبة ===== */
 .game-status {
-    text-align: center; padding: 12px; background: #f9fafb;
-    border-radius: 10px; font-weight: 600; color: #4b5563; margin-bottom: 15px;
+    text-align: center;
+    padding: 12px;
+    background: #f9fafb;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 15px;
+    font-size: 16px;
 }
 
-.game-actions { display: flex; gap: 10px; }
+/* ===== أزرار اللعبة ===== */
+.game-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .game-btn {
-    flex: 1; padding: 12px; border-radius: 10px; border: none;
-    font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.3s;
-}
-.game-btn.primary { background: #8b5cf6; color: white; }
-.game-btn.primary:hover { background: #7c3aed; }
-.game-btn.secondary { background: #f3f4f6; color: #4b5563; }
-.game-btn.secondary:hover { background: #e5e7eb; }
-
-/* ===== Lobby ===== */
-.lobby {
-    background: white; border-radius: 20px; padding: 25px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;
-}
-.lobby h3 { color: #4c1d95; margin-bottom: 15px; font-size: 20px; text-align: center; }
-.lobby-section { margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 12px; }
-.lobby-section h4 { color: #4c1d95; margin-bottom: 10px; font-size: 16px; }
-.lobby-section p { color: #6b7280; font-size: 13px; margin-bottom: 10px; line-height: 1.5; }
-
-.room-code {
-    background: #1f2937; color: #10b981; padding: 15px; border-radius: 10px;
-    text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px;
-    font-family: 'Courier New', monospace; margin: 10px 0; cursor: pointer;
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
     transition: all 0.3s;
 }
-.room-code:hover { background: #111827; }
 
-.share-link-box {
-    background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 10px;
-    padding: 12px; margin: 10px 0;
-}
-.share-link-box label { display: block; color: #0369a1; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
-.share-link-box input {
-    width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;
-    font-size: 13px; font-family: monospace; background: white;
+.game-btn.primary {
+    background: #8b5cf6;
+    color: white;
 }
 
-.qr-container {
-    text-align: center; margin: 15px 0; padding: 15px;
-    background: white; border-radius: 12px;
+.game-btn.primary:hover {
+    background: #7c3aed;
 }
-.qr-container canvas {
-    border: 4px solid white; border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-.qr-hint { color: #6b7280; font-size: 12px; margin-top: 10px; }
 
-.share-buttons { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.share-btn {
-    flex: 1; min-width: 120px; padding: 10px; border-radius: 8px;
-    border: none; cursor: pointer; font-weight: 600; font-size: 13px;
+.game-btn.secondary {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.game-btn.secondary:hover {
+    background: #e5e7eb;
+}
+
+.reset-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 15px;
+    margin-top: 10px;
     transition: all 0.3s;
 }
-.share-btn.whatsapp { background: #25d366; color: white; }
-.share-btn.telegram { background: #0088cc; color: white; }
-.share-btn.copy { background: #6b7280; color: white; }
-.share-btn:hover { transform: translateY(-2px); }
 
-.input-group { display: flex; gap: 8px; margin-top: 10px; }
-.input-group input {
-    flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;
-    text-align: center; letter-spacing: 2px; font-family: 'Courier New'; text-transform: uppercase;
-}
-.input-group input:focus { outline: none; border-color: #8b5cf6; }
-.input-group button {
-    padding: 10px 20px; background: #8b5cf6; color: white; border: none;
-    border-radius: 8px; cursor: pointer; font-weight: bold;
+.reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
 }
 
-.connection-status {
-    padding: 10px; border-radius: 8px; text-align: center;
-    font-size: 13px; margin-top: 10px;
+/* ===== بطاقات الألعاب ===== */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
 }
-.connection-status.connecting { background: #fef3c7; color: #92400e; }
-.connection-status.connected { background: #d1fae5; color: #065f46; }
-.connection-status.error { background: #fee2e2; color: #991b1b; }
 
+.game-card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 3px solid transparent;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    border-color: #8b5cf6;
+    box-shadow: 0 15px 30px rgba(139, 92, 246, 0.2);
+}
+
+.game-icon {
+    font-size: 60px;
+    margin-bottom: 15px;
+}
+
+.game-card h3 {
+    color: #4c1d95;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.game-card p {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.game-reward {
+    display: inline-block;
+    background: #f0fdf4;
+    color: #065f46;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+/* ===== لعبة الذاكرة ===== */
+.memory-stats {
+    display: flex;
+    justify-content: space-around;
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.memory-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    background: #e5e7eb;
+    padding: 8px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.memory-card {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 35px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: white;
+    user-select: none;
+}
+
+.memory-card:hover {
+    transform: scale(0.95);
+}
+
+.memory-card.flipped {
+    background: white;
+    color: #1f2937;
+}
+
+.memory-card.matched {
+    background: #d1fae5;
+    color: #065f46;
+    cursor: not-allowed;
+}
+
+/* ===== لعبة الثعبان ===== */
+.snake-score {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #4b5563;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 10px;
+}
+
+.snake-score span {
+    color: #10b981;
+    font-size: 24px;
+}
+
+#snakeCanvas {
+    display: block;
+    margin: 0 auto;
+    border: 3px solid #1f2937;
+    border-radius: 8px;
+    max-width: 100%;
+    background: #1f2937;
+}
+
+.snake-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.snake-controls button {
+    width: 50px;
+    height: 50px;
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s;
+}
+
+.snake-controls button:hover {
+    background: #7c3aed;
+    transform: scale(1.05);
+}
+
+.snake-controls > div {
+    display: flex;
+    gap: 5px;
+}
+
+/* ===== التجاوب ===== */
 @media (max-width: 600px) {
-    .game-intro h2 { font-size: 20px; }
-    .cell { font-size: 35px; }
-    .player { min-width: 100px; padding: 8px 12px; }
-    .player .symbol { font-size: 24px; }
+    .game-wrapper {
+        padding: 15px;
+    }
+    
+    .game-header h3 {
+        font-size: 18px;
+    }
+    
+    .cell {
+        font-size: 35px;
+    }
+    
+    .player {
+        min-width: 80px;
+        padding: 8px 12px;
+    }
+    
+    .player .symbol {
+        font-size: 24px;
+    }
+    
+    .player .score {
+        font-size: 16px;
+    }
+    
+    .memory-card {
+        font-size: 25px;
+    }
+    
+    .game-mode-select {
+        flex-direction: column;
+    }
+    
+    #snakeCanvas {
+        width: 100%;
+        height: auto;
+    }
+    
+    .snake-controls button {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
 }
