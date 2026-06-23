@@ -13,45 +13,78 @@
         body { background: #f3f4f6; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; }
         h1 { color: #1f2937; margin-bottom: 20px; }
+        h2 { color: #374151; margin-bottom: 15px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
         .stat-card .label { color: #6b7280; font-size: 14px; margin-bottom: 5px; }
         .stat-card .value { color: #1f2937; font-size: 32px; font-weight: bold; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab { padding: 10px 20px; background: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .stat-card .icon { font-size: 40px; margin-bottom: 10px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 10px 20px; background: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .tab:hover { background: #e5e7eb; }
         .tab.active { background: #3b82f6; color: white; }
-        .content { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .content { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb; }
-        th { background: #f9fafb; font-weight: 600; color: #374151; }
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; position: sticky; top: 0; }
+        tr:hover { background: #f9fafb; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block; }
         .badge.success { background: #d1fae5; color: #065f46; }
         .badge.warning { background: #fef3c7; color: #92400e; }
         .badge.error { background: #fee2e2; color: #991b1b; }
+        .badge.info { background: #dbeafe; color: #1e40af; }
         #map { height: 500px; border-radius: 12px; margin-top: 20px; }
-        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 2px; transition: all 0.3s; }
+        .action-btn:hover { transform: scale(1.05); }
         .action-btn.view { background: #3b82f6; color: white; }
         .action-btn.approve { background: #10b981; color: white; }
+        .action-btn.reject { background: #ef4444; color: white; }
+        .action-btn.delete { background: #6b7280; color: white; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 25px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f3f4f6; }
+        .modal-header h2 { color: #1f2937; font-size: 22px; }
+        .close-btn { background: #f3f4f6; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; }
+        .info-row .label { color: #6b7280; font-weight: 600; }
+        .info-row .value { color: #1f2937; }
+        .loading { text-align: center; padding: 40px; color: #6b7280; }
+        .empty { text-align: center; padding: 40px; color: #9ca3af; }
+        .refresh-btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 15px; }
+        .refresh-btn:hover { background: #2563eb; }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            table { font-size: 12px; }
+            th, td { padding: 8px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎛️ لوحة تحكم المدير</h1>
         
+        <button class="refresh-btn" onclick="loadAllData()">🔄 تحديث البيانات</button>
+        
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="icon">👥</div>
                 <div class="label">إجمالي المستخدمين</div>
                 <div class="value" id="totalUsers">0</div>
             </div>
             <div class="stat-card">
+                <div class="icon">🟢</div>
                 <div class="label">المستخدمون النشطون</div>
                 <div class="value" id="activeUsers">0</div>
             </div>
             <div class="stat-card">
+                <div class="icon">🎁</div>
                 <div class="label">طلبات الهدايا</div>
                 <div class="value" id="totalOrders">0</div>
             </div>
             <div class="stat-card">
+                <div class="icon">⏳</div>
                 <div class="label">الطلبات المعلقة</div>
                 <div class="value" id="pendingOrders">0</div>
             </div>
@@ -78,7 +111,9 @@
                         <th>إجراءات</th>
                     </tr>
                 </thead>
-                <tbody id="usersTable"></tbody>
+                <tbody id="usersTable">
+                    <tr><td colspan="8" class="loading">جاري التحميل...</td></tr>
+                </tbody>
             </table>
         </div>
 
@@ -91,3 +126,352 @@
                         <th>الهدية</th>
                         <th>الاسم</th>
                         <th>الهاتف</th>
+                        <th>العنوان</th>
+                        <th>الحالة</th>
+                        <th>التاريخ</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTable">
+                    <tr><td colspan="8" class="loading">جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="content" id="mapTab" style="display:none;">
+            <h2>🗺️ خريطة المستخدمين</h2>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Modal تفاصيل المستخدم -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>👤 تفاصيل المستخدم</h2>
+                <button class="close-btn" onclick="closeModal('userModal')">✕</button>
+            </div>
+            <div id="userDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ===== إعدادات Firebase =====
+        // ============================================
+        // ⚠️ استبدل هذه القيم بقيم مشروعك من Firebase Console
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ============================================
+        // ===== المتغيرات العامة =====
+        // ============================================
+        let allUsers = {};
+        let allOrders = {};
+        let map = null;
+        let markers = [];
+
+        // ============================================
+        // ===== تحميل البيانات =====
+        // ============================================
+        async function loadAllData() {
+            try {
+                // تحميل المستخدمين
+                const usersSnapshot = await db.ref('users').once('value');
+                allUsers = usersSnapshot.val() || {};
+                
+                // تحميل الطلبات
+                const ordersSnapshot = await db.ref('orders').once('value');
+                allOrders = ordersSnapshot.val() || {};
+                
+                // تحديث الإحصائيات
+                updateStats();
+                
+                // عرض البيانات
+                renderUsers();
+                renderOrders();
+                renderMap();
+                
+                console.log('✅ تم تحميل البيانات بنجاح');
+            } catch (error) {
+                console.error('❌ خطأ في تحميل البيانات:', error);
+                alert('حدث خطأ في تحميل البيانات');
+            }
+        }
+
+        // ============================================
+        // ===== تحديث الإحصائيات =====
+        // ============================================
+        function updateStats() {
+            const usersCount = Object.keys(allUsers).length;
+            const ordersCount = Object.keys(allOrders).length;
+            
+            // المستخدمون النشطون (آخر زيارة خلال 24 ساعة)
+            const now = new Date();
+            const activeUsers = Object.values(allUsers).filter(u => {
+                const lastVisit = new Date(u.data?.lastUpdate || 0);
+                const hoursDiff = (now - lastVisit) / (1000 * 60 * 60);
+                return hoursDiff < 24;
+            }).length;
+            
+            // الطلبات المعلقة
+            const pendingOrders = Object.values(allOrders).filter(o => o.status === 'pending').length;
+            
+            document.getElementById('totalUsers').textContent = usersCount;
+            document.getElementById('activeUsers').textContent = activeUsers;
+            document.getElementById('totalOrders').textContent = ordersCount;
+            document.getElementById('pendingOrders').textContent = pendingOrders;
+        }
+
+        // ============================================
+        // ===== عرض المستخدمين =====
+        // ============================================
+        function renderUsers() {
+            const tbody = document.getElementById('usersTable');
+            const users = Object.entries(allUsers);
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">لا يوجد مستخدمون</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = users.map(([id, user]) => {
+                const data = user.data || {};
+                const deviceInfo = data.deviceInfo || {};
+                const location = data.location;
+                const points = user.points || 0;
+                const lastVisit = data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('ar') : 'غير معروف';
+                
+                return `
+                    <tr>
+                        <td>${id.substring(0, 15)}...</td>
+                        <td>${deviceInfo.deviceType || 'غير معروف'}</td>
+                        <td>${deviceInfo.browser || 'غير معروف'}</td>
+                        <td>${data.ipAddress || 'غير معروف'}</td>
+                        <td>${location ? `<span class="badge success">متوفر</span>` : `<span class="badge warning">غير متوفر</span>`}</td>
+                        <td>${points}</td>
+                        <td>${lastVisit}</td>
+                        <td>
+                            <button class="action-btn view" onclick="viewUser('${id}')">👁️ عرض</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // ===== عرض الطلبات =====
+        // ============================================
+        function renderOrders() {
+            const tbody = document.getElementById('ordersTable');
+            const orders = Object.entries(allOrders);
+            
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">لا يوجد طلبات</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = orders.map(([id, order]) => {
+                const reward = order.reward || {};
+                const customer = order.customer || {};
+                const status = order.status || 'pending';
+                const timestamp = order.timestamp ? new Date(order.timestamp).toLocaleString('ar') : 'غير معروف';
+                
+                const statusBadge = status === 'pending' ? '<span class="badge warning">معلق</span>' :
+                                   status === 'approved' ? '<span class="badge success">موافق عليه</span>' :
+                                   '<span class="badge error">مرفوض</span>';
+                
+                return `
+                    <tr>
+                        <td>${id}</td>
+                        <td>${reward.icon || ''} ${reward.name || 'غير معروف'}</td>
+                        <td>${customer.name || 'غير معروف'}</td>
+                        <td>${customer.phone || 'غير معروف'}</td>
+                        <td>${customer.city || ''} - ${customer.address || ''}</td>
+                        <td>${statusBadge}</td>
+                        <td>${timestamp}</td>
+                        <td>
+                            ${status === 'pending' ? `
+                                <button class="action-btn approve" onclick="approveOrder('${id}')">✅ موافقة</button>
+                                <button class="action-btn reject" onclick="rejectOrder('${id}')">❌ رفض</button>
+                            ` : ''}
+                            <button class="action-btn delete" onclick="deleteOrder('${id}')">🗑️ حذف</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // ===== عرض الخريطة =====
+        // ============================================
+        function renderMap() {
+            if (!map) {
+                map = L.map('map').setView([24.7136, 46.6753], 5); // الرياض كافتراضي
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+            }
+            
+            // إزالة العلامات القديمة
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            
+            // إضافة علامات للمستخدمين الذين لديهم موقع
+            Object.entries(allUsers).forEach(([id, user]) => {
+                const location = user.data?.location;
+                if (location && location.lat && location.lng) {
+                    const marker = L.marker([location.lat, location.lng])
+                        .addTo(map)
+                        .bindPopup(`
+                            <strong>مستخدم:</strong> ${id.substring(0, 15)}...<br>
+                            <strong>الجهاز:</strong> ${user.data?.deviceInfo?.deviceType || 'غير معروف'}<br>
+                            <strong>IP:</strong> ${user.data?.ipAddress || 'غير معروف'}<br>
+                            <strong>النقاط:</strong> ${user.points || 0}
+                        `);
+                    markers.push(marker);
+                }
+            });
+            
+            // تكبير الخريطة لتناسب جميع العلامات
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // ============================================
+        // ===== عرض تفاصيل المستخدم =====
+        // ============================================
+        function viewUser(id) {
+            const user = allUsers[id];
+            if (!user) return;
+            
+            const data = user.data || {};
+            const deviceInfo = data.deviceInfo || {};
+            const location = data.location;
+            
+            const details = `
+                <div class="info-row"><span class="label">المعرف:</span><span class="value">${id}</span></div>
+                <div class="info-row"><span class="label">النقاط:</span><span class="value">${user.points || 0}</span></div>
+                
+                <h3 style="margin: 15px 0 10px; color: #374151;">📱 معلومات الجهاز</h3>
+                <div class="info-row"><span class="label">نوع الجهاز:</span><span class="value">${deviceInfo.deviceType || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">نظام التشغيل:</span><span class="value">${deviceInfo.os || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">المتصفح:</span><span class="value">${deviceInfo.browser || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">إصدار المتصفح:</span><span class="value">${deviceInfo.browserVersion || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">اللغة:</span><span class="value">${deviceInfo.language || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">المنطقة الزمنية:</span><span class="value">${deviceInfo.timezone || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">دقة الشاشة:</span><span class="value">${deviceInfo.screenWidth} × ${deviceInfo.screenHeight}</span></div>
+                <div class="info-row"><span class="label">أنوية المعالج:</span><span class="value">${deviceInfo.cpuCores || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">الذاكرة:</span><span class="value">${deviceInfo.ram || 'غير متاح'}</span></div>
+                
+                <h3 style="margin: 15px 0 10px; color: #374151;">🌐 معلومات الشبكة</h3>
+                <div class="info-row"><span class="label">عنوان IP:</span><span class="value">${data.ipAddress || 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">حالة الاتصال:</span><span class="value">${deviceInfo.online ? 'متصل' : 'غير متصل'}</span></div>
+                <div class="info-row"><span class="label">نوع الاتصال:</span><span class="value">${deviceInfo.connectionType || 'غير متاح'}</span></div>
+                
+                ${location ? `
+                    <h3 style="margin: 15px 0 10px; color: #374151;">📍 الموقع</h3>
+                    <div class="info-row"><span class="label">خط العرض:</span><span class="value">${location.lat}</span></div>
+                    <div class="info-row"><span class="label">خط الطول:</span><span class="value">${location.lng}</span></div>
+                    <div class="info-row"><span class="label">الدقة:</span><span class="value">${Math.round(location.accuracy)} متر</span></div>
+                    <div class="info-row"><span class="label">التاريخ:</span><span class="value">${new Date(location.timestamp).toLocaleString('ar')}</span></div>
+                ` : ''}
+                
+                <h3 style="margin: 15px 0 10px; color: #374151;">🕐 وقت الزيارة</h3>
+                <div class="info-row"><span class="label">أول زيارة:</span><span class="value">${deviceInfo.firstVisit ? new Date(deviceInfo.firstVisit).toLocaleString('ar') : 'غير معروف'}</span></div>
+                <div class="info-row"><span class="label">آخر زيارة:</span><span class="value">${data.lastUpdate ? new Date(data.lastUpdate).toLocaleString('ar') : 'غير معروف'}</span></div>
+            `;
+            
+            document.getElementById('userDetails').innerHTML = details;
+            document.getElementById('userModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ============================================
+        // ===== إدارة الطلبات =====
+        // ============================================
+        async function approveOrder(id) {
+            if (!confirm('هل تريد الموافقة على هذا الطلب؟')) return;
+            
+            try {
+                await db.ref(`orders/${id}`).update({ status: 'approved' });
+                alert('✅ تم الموافقة على الطلب');
+                loadAllData();
+            } catch (error) {
+                console.error('خطأ:', error);
+                alert('حدث خطأ في الموافقة على الطلب');
+            }
+        }
+
+        async function rejectOrder(id) {
+            if (!confirm('هل تريد رفض هذا الطلب؟')) return;
+            
+            try {
+                await db.ref(`orders/${id}`).update({ status: 'rejected' });
+                alert('❌ تم رفض الطلب');
+                loadAllData();
+            } catch (error) {
+                console.error('خطأ:', error);
+                alert('حدث خطأ في رفض الطلب');
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('هل تريد حذف هذا الطلب نهائياً؟')) return;
+            
+            try {
+                await db.ref(`orders/${id}`).remove();
+                alert('🗑️ تم حذف الطلب');
+                loadAllData();
+            } catch (error) {
+                console.error('خطأ:', error);
+                alert('حدث خطأ في حذف الطلب');
+            }
+        }
+
+        // ============================================
+        // ===== التبويبات =====
+        // ============================================
+        function showTab(tabName) {
+            // إخفاء جميع التبويبات
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(c => c.style.display = 'none');
+            
+            // إظهار التبويب المحدد
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}Tab`).style.display = 'block';
+            
+            // تحديث الخريطة إذا لزم الأمر
+            if (tabName === 'map') {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
+        }
+
+        // ============================================
+        // ===== التشغيل =====
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            
+            // تحديث البيانات كل 30 ثانية
+            setInterval(loadAllData, 30000);
+        });
+    </script>
+</body>
+</html>
