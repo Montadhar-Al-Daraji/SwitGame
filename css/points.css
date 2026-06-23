@@ -1,1 +1,28 @@
+/* ===== Points Card ===== */
+.points-card {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;
+    text-align: center;
+}
+.points-card .big-number { font-size: 50px; font-weight: bold; margin: 10px 0; }
+.points-card p { opacity: 0.95; }
 
+/* ===== Rewards Grid ===== */
+.rewards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.reward-card {
+    background: white; border-radius: 16px; padding: 20px; text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: all 0.3s;
+    border: 3px solid transparent;
+}
+.reward-card.unlocked { border-color: #10b981; background: #f0fdf4; }
+.reward-card.locked { opacity: 0.6; }
+.reward-card .icon { font-size: 40px; margin-bottom: 8px; }
+.reward-card h4 { color: #065f46; margin-bottom: 5px; }
+.reward-card .req { color: #6b7280; font-size: 12px; margin-bottom: 8px; }
+.reward-card .progress {
+    height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 8px;
+}
+.reward-card .progress-bar {
+    height: 100%; background: linear-gradient(90deg, #10b981, #059669);
+    transition: width 0.5s;
+}
