@@ -3,467 +3,1381 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>معلومات جهازي - Device Info</title>
+    <title>مطعم الذواقة - اطلب، العب، واكسب</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        body { background: #fef5e7; color: #2d3748; min-height: 100vh; padding-bottom: 30px; }
+
+        /* ===== Header ===== */
+        header {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white; padding: 20px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
+        }
+        header h1 { font-size: 26px; margin-bottom: 5px; }
+        header p { font-size: 13px; opacity: 0.9; }
+        .header-actions { position: absolute; top: 15px; left: 15px; display: flex; gap: 10px; }
+        .icon-btn {
+            background: white; color: #d97706; width: 45px; height: 45px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: relative; transition: transform 0.3s; border: none;
+        }
+        .icon-btn:hover { transform: scale(1.1); }
+        .badge {
+            position: absolute; top: -5px; right: -5px; background: #dc2626; color: white;
+            min-width: 22px; height: 22px; border-radius: 11px; font-size: 11px;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 0 5px;
+        }
+        .points-badge { background: #10b981 !important; }
+
+        /* ===== Tabs ===== */
+        .tabs {
+            display: flex; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: sticky; top: 85px; z-index: 99; overflow-x: auto;
+        }
+        .tab {
+            flex: 1; padding: 15px 8px; text-align: center; cursor: pointer;
+            font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent;
+            transition: all 0.3s; font-size: 14px; white-space: nowrap; min-width: 80px;
+        }
+        .tab.active { color: #d97706; border-color: #d97706; background: #fef5e7; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .section-title {
+            font-size: 22px; color: #92400e; margin: 20px 0 15px;
+            padding-right: 15px; border-right: 5px solid #d97706;
         }
 
-        body {
-            min-height: 100vh;
+        /* ===== Menu ===== */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
+        .menu-item {
+            background: white; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: all 0.3s;
+        }
+        .menu-item:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
+        .menu-item .img {
+            height: 140px; background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            display: flex; align-items: center; justify-content: center; font-size: 60px;
+        }
+        .menu-item .info { padding: 12px; }
+        .menu-item h3 { color: #92400e; margin-bottom: 4px; font-size: 16px; }
+        .menu-item .desc { color: #6b7280; font-size: 12px; margin-bottom: 8px; min-height: 30px; }
+        .menu-item .footer { display: flex; justify-content: space-between; align-items: center; }
+        .price { color: #d97706; font-weight: bold; font-size: 16px; }
+        .add-btn {
+            background: #d97706; color: white; border: none; padding: 7px 14px;
+            border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px;
+        }
+        .add-btn:hover { background: #b45309; }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); display: none; align-items: center;
+            justify-content: center; z-index: 1000; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 20px; max-width: 600px; width: 100%;
+            max-height: 90vh; overflow-y: auto; padding: 25px; animation: slideUp 0.3s;
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f3f4f6;
+        }
+        .modal-header h2 { color: #92400e; font-size: 22px; }
+        .close-btn {
+            background: #f3f4f6; border: none; width: 35px; height: 35px;
+            border-radius: 50%; cursor: pointer; font-size: 18px;
+        }
+        .cart-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; background: #fef5e7; border-radius: 12px; margin-bottom: 10px;
+        }
+        .cart-item .name { flex: 1; font-weight: 600; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; }
+        .qty-btn {
+            background: #d97706; color: white; border: none; width: 28px; height: 28px;
+            border-radius: 50%; cursor: pointer; font-weight: bold;
+        }
+        .total-row {
+            display: flex; justify-content: space-between; padding: 15px;
+            background: #fef5e7; border-radius: 12px; margin: 15px 0;
+            font-weight: bold; font-size: 18px; color: #92400e;
+        }
+        .checkout-btn {
+            width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white; border: none; padding: 15px; border-radius: 12px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+
+        /* ===== Location ===== */
+        .location-info {
+            background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px;
+            padding: 15px; margin-bottom: 15px;
+        }
+        .location-info h3 { color: #1e40af; margin-bottom: 8px; }
+        .location-info p { color: #1e3a8a; font-size: 14px; line-height: 1.6; }
+        .location-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+        .loc-btn {
+            flex: 1; padding: 12px; border-radius: 10px; border: 2px solid;
+            cursor: pointer; font-weight: 600; font-size: 14px;
+        }
+        .loc-btn.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .loc-btn.secondary { background: white; color: #6b7280; border-color: #d1d5db; }
+        #map { height: 300px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #e5e7eb; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb;
+            border-radius: 8px; font-size: 14px; font-family: inherit;
+        }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+        .manual-form { display: none; }
+        .manual-form.active { display: block; }
+        .status-msg { padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; display: none; }
+        .status-msg.show { display: block; }
+        .status-msg.success { background: #d1fae5; color: #065f46; }
+        .status-msg.error { background: #fee2e2; color: #991b1b; }
+        .status-msg.info { background: #dbeafe; color: #1e40af; }
+        .confirm-btn {
+            width: 100%; background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            color: white; border: none; padding: 15px; border-radius: 12px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+        .consent-checkbox {
+            display: flex; align-items: flex-start; gap: 10px;
+            background: #fef3c7; padding: 12px; border-radius: 10px;
+            margin: 15px 0; border: 2px solid #fbbf24;
+        }
+        .consent-checkbox input { margin-top: 3px; flex-shrink: 0; }
+        .consent-checkbox label { font-size: 13px; color: #78350f; cursor: pointer; }
+
+        /* ===== Device Info Section ===== */
+        .device-hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            overflow-x: hidden;
+            color: white; padding: 30px; border-radius: 20px; margin-bottom: 25px;
+            text-align: center; position: relative; overflow: hidden;
         }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
-            pointer-events: none;
+        .device-hero::before {
+            content: ''; position: absolute; top: -50%; right: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 15s linear infinite;
         }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 700px;
-            width: 100%;
-            position: relative;
-            z-index: 1;
-            animation: fadeIn 0.8s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 35px;
-        }
-
-        .header .icon {
-            font-size: 60px;
-            margin-bottom: 10px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .header h1 {
-            color: #2d3748;
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            color: #718096;
-            font-size: 15px;
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .device-hero .icon { font-size: 60px; margin-bottom: 10px; position: relative; }
+        .device-hero h2 { font-size: 26px; margin-bottom: 10px; position: relative; }
+        .device-hero p { opacity: 0.95; line-height: 1.6; position: relative; }
+        .bonus-badge {
+            display: inline-block; background: #10b981; color: white;
+            padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold;
+            margin-top: 12px; position: relative;
         }
 
         .ip-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 25px;
-            color: white;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            border-radius: 16px; padding: 25px; margin-bottom: 25px;
+            color: white; text-align: center; position: relative; overflow: hidden;
         }
-
-        .ip-card::before {
-            content: '';
-            position: absolute;
-            top: -50%; right: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 10s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .ip-card .label {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 8px;
-            position: relative;
-        }
-
+        .ip-card .label { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
         .ip-card .ip-value {
-            font-size: 32px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 12px;
-            position: relative;
-            word-break: break-all;
+            font-size: 32px; font-weight: bold; letter-spacing: 2px;
+            margin-bottom: 12px; word-break: break-all;
         }
-
         .copy-btn {
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.4);
-            color: white;
-            padding: 8px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            position: relative;
+            background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);
+            color: white; padding: 8px 20px; border-radius: 25px; cursor: pointer;
+            font-size: 14px; transition: all 0.3s;
         }
-
-        .copy-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
+        .copy-btn:hover { background: rgba(255,255,255,0.3); }
 
         .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px; margin-bottom: 20px;
         }
-
         .info-item {
-            background: #f7fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 18px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            background: white; border: 2px solid #e2e8f0; border-radius: 12px;
+            padding: 18px; transition: all 0.3s; display: flex; align-items: center; gap: 15px;
         }
-
-        .info-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            border-color: #667eea;
-        }
-
-        .info-item .emoji {
-            font-size: 32px;
-            flex-shrink: 0;
-        }
-
-        .info-item .details {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .info-item .info-label {
-            font-size: 12px;
-            color: #718096;
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
-
-        .info-item .info-value {
-            font-size: 15px;
-            color: #2d3748;
-            font-weight: 600;
-            word-break: break-word;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #718096;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 4px solid #e2e8f0;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .info-item:hover { transform: translateY(-3px); border-color: #667eea; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .info-item .emoji { font-size: 32px; flex-shrink: 0; }
+        .info-item .details { flex: 1; min-width: 0; }
+        .info-item .info-label { font-size: 12px; color: #718096; margin-bottom: 4px; font-weight: 600; }
+        .info-item .info-value { font-size: 15px; color: #2d3748; font-weight: 600; word-break: break-word; }
 
         .refresh-btn {
-            display: block;
-            margin: 20px auto 0;
+            display: block; margin: 20px auto 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+            color: white; border: none; padding: 12px 30px; border-radius: 25px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .refresh-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        /* ===== Game ===== */
+        .game-intro {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;
+            text-align: center; position: relative; overflow: hidden;
         }
-
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #2d3748;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            font-size: 14px;
-            transition: transform 0.3s;
-            z-index: 1000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        .game-intro h2 { font-size: 26px; margin-bottom: 10px; position: relative; }
+        .game-intro p { font-size: 15px; opacity: 0.95; line-height: 1.6; position: relative; }
+        .game-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .mode-card {
+            background: white; border-radius: 16px; padding: 25px; text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08); cursor: pointer;
+            transition: all 0.3s; border: 3px solid transparent;
         }
+        .mode-card:hover { transform: translateY(-5px); border-color: #8b5cf6; }
+        .mode-card .icon { font-size: 50px; margin-bottom: 10px; }
+        .mode-card h3 { color: #4c1d95; margin-bottom: 8px; font-size: 18px; }
+        .mode-card p { color: #6b7280; font-size: 13px; line-height: 1.5; }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
+        .game-container {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto;
         }
+        .game-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f3f4f6;
+        }
+        .back-btn {
+            background: #f3f4f6; border: none; padding: 8px 15px; border-radius: 20px;
+            cursor: pointer; font-weight: 600; color: #4b5563;
+        }
+        .player-info {
+            display: flex; justify-content: space-around; margin-bottom: 20px;
+            background: #f9fafb; padding: 15px; border-radius: 12px;
+        }
+        .player {
+            text-align: center; padding: 10px 20px; border-radius: 10px;
+            transition: all 0.3s; min-width: 120px;
+        }
+        .player.active { background: #8b5cf6; color: white; transform: scale(1.05); }
+        .player .symbol { font-size: 32px; font-weight: bold; }
+        .player .name { font-size: 13px; margin-top: 3px; }
+        .player .score { font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            background: #e5e7eb; padding: 8px; border-radius: 12px; margin-bottom: 15px;
+        }
+        .cell {
+            aspect-ratio: 1; background: white; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 50px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s; user-select: none;
+        }
+        .cell:hover:not(.taken) { background: #f3f4f6; }
+        .cell.taken { cursor: not-allowed; }
+        .cell.x { color: #8b5cf6; }
+        .cell.o { color: #ec4899; }
+        .cell.win { background: #fef3c7; animation: winPulse 0.6s ease; }
+        @keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .game-status {
+            text-align: center; padding: 12px; background: #f9fafb;
+            border-radius: 10px; font-weight: 600; color: #4b5563; margin-bottom: 15px;
+        }
+        .game-btn {
+            flex: 1; padding: 12px; border-radius: 10px; border: none;
+            font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .game-btn.primary { background: #8b5cf6; color: white; }
+        .game-btn.secondary { background: #f3f4f6; color: #4b5563; }
 
-        .footer {
+        .lobby {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto;
+        }
+        .lobby-section { margin-bottom: 20px; padding: 15px; background: #f9fafb; border-radius: 12px; }
+        .lobby-section h4 { color: #4c1d95; margin-bottom: 10px; font-size: 16px; }
+        .lobby-section p { color: #6b7280; font-size: 13px; margin-bottom: 10px; }
+        .room-code {
+            background: #1f2937; color: #10b981; padding: 15px; border-radius: 10px;
+            text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px;
+            font-family: 'Courier New', monospace; margin: 10px 0; cursor: pointer;
+        }
+        .input-group { display: flex; gap: 8px; margin-top: 10px; }
+        .input-group input {
+            flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;
+            text-align: center; letter-spacing: 2px; font-family: 'Courier New'; text-transform: uppercase;
+        }
+        .input-group button {
+            padding: 10px 20px; background: #8b5cf6; color: white; border: none;
+            border-radius: 8px; cursor: pointer; font-weight: bold;
+        }
+        .connection-status {
+            padding: 10px; border-radius: 8px; text-align: center;
+            font-size: 13px; margin-top: 10px;
+        }
+        .connection-status.connecting { background: #fef3c7; color: #92400e; }
+        .connection-status.connected { background: #d1fae5; color: #065f46; }
+        .connection-status.error { background: #fee2e2; color: #991b1b; }
+
+        /* ===== Points ===== */
+        .points-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;
             text-align: center;
-            margin-top: 20px;
-            color: #a0aec0;
-            font-size: 13px;
         }
+        .points-card .big-number { font-size: 50px; font-weight: bold; margin: 10px 0; }
+        .rewards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .reward-card {
+            background: white; border-radius: 16px; padding: 20px; text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+        .reward-card.unlocked { border-color: #10b981; background: #f0fdf4; }
+        .reward-card.locked { opacity: 0.6; }
+        .reward-card .icon { font-size: 40px; margin-bottom: 8px; }
+        .reward-card h4 { color: #065f46; margin-bottom: 5px; }
+        .reward-card .req { color: #6b7280; font-size: 12px; margin-bottom: 8px; }
+        .reward-card .progress {
+            height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; margin-top: 8px;
+        }
+        .reward-card .progress-bar {
+            height: 100%; background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.5s;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed; top: 100px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: #1f2937; color: white; padding: 12px 25px; border-radius: 25px;
+            font-size: 14px; transition: transform 0.3s; z-index: 2000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-width: 90%;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+
+        /* ===== Privacy Notice ===== */
+        .privacy-notice {
+            background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px;
+            padding: 15px; margin-bottom: 20px;
+        }
+        .privacy-notice h4 { color: #0369a1; margin-bottom: 8px; font-size: 15px; }
+        .privacy-notice p { color: #0c4a6e; font-size: 13px; line-height: 1.6; }
+        .privacy-notice ul { margin-top: 8px; padding-right: 20px; }
+        .privacy-notice li { color: #0c4a6e; font-size: 13px; margin-bottom: 3px; }
 
         @media (max-width: 600px) {
-            .container { padding: 25px 20px; }
-            .header h1 { font-size: 22px; }
-            .ip-card .ip-value { font-size: 24px; }
-            .header .icon { font-size: 45px; }
+            header h1 { font-size: 20px; }
+            .header-actions { top: 10px; left: 10px; gap: 5px; }
+            .icon-btn { width: 38px; height: 38px; font-size: 17px; }
+            .tabs { top: 70px; }
+            .tab { padding: 12px 5px; font-size: 12px; }
+            .menu-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .menu-item .img { height: 100px; font-size: 45px; }
+            .menu-item h3 { font-size: 14px; }
+            .price { font-size: 14px; }
+            .add-btn { padding: 5px 10px; font-size: 12px; }
+            .cell { font-size: 35px; }
+            .ip-card .ip-value { font-size: 22px; }
+            .location-actions { flex-direction: column; }
         }
     </style>
 </head>
 <body>
+
+<header>
+    <h1>🍽️ مطعم الذواقة</h1>
+    <p>اطلب • العب XO • اكتشف جهازك • اكسب نقاط</p>
+    <div class="header-actions">
+        <button class="icon-btn" onclick="App.openTab('points')" title="نقاطي">
+            ⭐<span class="badge points-badge" id="totalPointsBadge">0</span>
+        </button>
+        <button class="icon-btn" onclick="Menu.openCart()" title="السلة">
+            🛒<span class="badge" id="cartBadge">0</span>
+        </button>
+    </div>
+</header>
+
+<div class="tabs">
+    <div class="tab active" data-tab="menu" onclick="App.openTab('menu')">🍔 القائمة</div>
+    <div class="tab" data-tab="game" onclick="App.openTab('game')">🎮 XO</div>
+    <div class="tab" data-tab="device" onclick="App.openTab('device')">📱 جهازي</div>
+    <div class="tab" data-tab="points" onclick="App.openTab('points')">⭐ النقاط</div>
+</div>
+
+<!-- ===== تبويب القائمة ===== -->
+<div class="tab-content active" id="tab-menu">
     <div class="container">
-        <div class="header">
+        <h2 class="section-title">🔥 الأطباق المميزة</h2>
+        <div class="menu-grid" id="menuGrid"></div>
+    </div>
+</div>
+
+<!-- ===== تبويب اللعبة ===== -->
+<div class="tab-content" id="tab-game">
+    <div class="container">
+        <div class="game-intro">
+            <h2>🎮 العب XO واكسب نقاط!</h2>
+            <p>
+                تحدى أصدقاءك في لعبة XO واكسب نقاط مع كل فوز!<br>
+                كل فوز = <strong>10 نقاط</strong> • كل تعادل = <strong>3 نقاط</strong>
+            </p>
+        </div>
+
+        <div id="gameModeSelect">
+            <div class="game-modes">
+                <div class="mode-card" onclick="Game.startLocal()">
+                    <div class="icon">👥</div>
+                    <h3>لعب محلي</h3>
+                    <p>العب مع صديق على نفس الجهاز</p>
+                </div>
+                <div class="mode-card" onclick="PeerGame.showLobby()">
+                    <div class="icon">🌐</div>
+                    <h3>لعب أونلاين</h3>
+                    <p>العب مع لاعب آخر عبر الإنترنت</p>
+                </div>
+            </div>
+        </div>
+        <div id="onlineLobby" style="display:none;"></div>
+        <div id="gameScreen" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- ===== تبويب معلومات الجهاز ===== -->
+<div class="tab-content" id="tab-device">
+    <div class="container">
+        <div class="device-hero">
             <div class="icon">🔍</div>
-            <h1>معلومات جهازي</h1>
-            <p>اكتشف نوع جهازك وعنوان IP الخاص بك</p>
+            <h2>معلومات جهازي</h2>
+            <p>اكتشف نوع جهازك ومواصفاته التقنية وعنوان IP العام</p>
+            <div class="bonus-badge">⭐ +5 نقاط عند زيارة هذه الصفحة (مرة يومياً)</div>
         </div>
 
-        <!-- بطاقة IP -->
+        <div class="privacy-notice">
+            <h4>🔒 خصوصيتك محمية</h4>
+            <p>هذه المعلومات تُجمع <strong>محلياً في متصفحك فقط</strong> وتظهر لك أنت فقط:</p>
+            <ul>
+                <li>✅ لا يتم إرسال أي بيانات لخوادمنا</li>
+                <li>✅ الاتصال الوحيد الخارجي هو لجلب عنوان IP العام</li>
+                <li>✅ لا يتم تخزين أو تتبع أي معلومات شخصية</li>
+            </ul>
+        </div>
+
         <div class="ip-card">
-            <div class="label">🌍 عنوان IP الخاص بك</div>
+            <div class="label">🌍 عنوان IP العام الخاص بك</div>
             <div class="ip-value" id="ipAddress">جاري التحميل...</div>
-            <button class="copy-btn" onclick="copyIP()">📋 نسخ العنوان</button>
+            <button class="copy-btn" onclick="DeviceInfo.copyIP()">📋 نسخ العنوان</button>
         </div>
 
-        <!-- شبكة المعلومات -->
         <div class="info-grid" id="infoGrid">
-            <div class="loading">
-                <div class="spinner"></div>
-                <p style="margin-top: 10px;">جاري جمع معلومات الجهاز...</p>
+            <div style="text-align:center; padding:20px; color:#718096;">
+                <p>جاري جمع معلومات الجهاز...</p>
             </div>
         </div>
 
-        <button class="refresh-btn" onclick="location.reload()">🔄 تحديث المعلومات</button>
+        <button class="refresh-btn" onclick="DeviceInfo.refresh()">🔄 تحديث المعلومات</button>
+    </div>
+</div>
 
-        <div class="footer">
-            <p>💡 المعلومات تُجمع محلياً من متصفحك فقط</p>
+<!-- ===== تبويب النقاط ===== -->
+<div class="tab-content" id="tab-points">
+    <div class="container">
+        <div class="points-card">
+            <p>⭐ إجمالي نقاطك</p>
+            <div class="big-number" id="totalPoints">0</div>
+            <p>استمر في اللعب والطلب واكتشاف جهازي لتكسب المزيد!</p>
+        </div>
+
+        <h2 class="section-title">🎁 المكافآت المتاحة</h2>
+        <div class="rewards-grid" id="rewardsGrid"></div>
+
+        <div class="privacy-notice" style="margin-top: 25px;">
+            <h4>📦 كيفية استلام المكافآت</h4>
+            <p>عند استبدال مكافأة <strong>مادية</strong>، سنطلب منك بوضوح:</p>
+            <ul>
+                <li>✅ اسمك الكامل</li>
+                <li>✅ عنوان التوصيل (إدخال يدوي)</li>
+                <li>✅ رقم هاتف للتواصل</li>
+                <li>✅ موافقتك الصريحة قبل الإرسال</li>
+            </ul>
         </div>
     </div>
+</div>
 
-    <div class="toast" id="toast">✅ تم النسخ بنجاح!</div>
+<!-- ===== Modal السلة ===== -->
+<div class="modal-overlay" id="cartModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🛒 سلة المشتريات</h2>
+            <button class="close-btn" onclick="Menu.closeCart()">✕</button>
+        </div>
+        <div id="cartContent"></div>
+    </div>
+</div>
 
-    <script>
-        // ========== جلب عنوان IP ==========
-        async function fetchIP() {
-            const ipElement = document.getElementById('ipAddress');
-            try {
-                // استخدام عدة خدمات كاحتياط
-                const services = [
-                    'https://api.ipify.org?format=json',
-                    'https://api.my-ip.io/v2/ip.json'
-                ];
-                
-                for (const url of services) {
-                    try {
-                        const res = await fetch(url);
-                        const data = await res.json();
-                        ipElement.textContent = data.ip;
-                        return;
-                    } catch (e) {
-                        continue;
-                    }
-                }
-                ipElement.textContent = 'تعذر الحصول على IP';
-            } catch (error) {
-                ipElement.textContent = 'خطأ في الاتصال';
-            }
+<!-- ===== Modal الموقع ===== -->
+<div class="modal-overlay" id="locationModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>📍 عنوان التوصيل</h2>
+            <button class="close-btn" onclick="Location.close()">✕</button>
+        </div>
+        <div id="locationStep1">
+            <div class="location-info">
+                <h3>📦 لماذا نحتاج موقعك؟</h3>
+                <p>
+                    نحتاج موقعك <strong>لتوصيل طلبك بدقة</strong> وضمان وصول الطعام ساخناً.
+                    <br><br>
+                    🔒 <strong>موقعك آمن</strong> ولن يُستخدم إلا لهذا الطلب فقط.
+                </p>
+            </div>
+            <div class="location-actions">
+                <button class="loc-btn primary" onclick="Location.requestGPS()">📍 تحديد تلقائي</button>
+                <button class="loc-btn secondary" onclick="Location.showManualForm()">✍️ إدخال يدوي</button>
+            </div>
+            <div class="status-msg" id="statusMsg"></div>
+            <div id="mapContainer" style="display:none;">
+                <div id="map"></div>
+                <button class="confirm-btn" onclick="Location.confirmGPS()">✅ تأكيد العنوان</button>
+            </div>
+            <div class="manual-form" id="manualForm">
+                <div class="form-group"><label>👤 الاسم *</label><input type="text" id="customerName"></div>
+                <div class="form-group"><label>📱 الهاتف *</label><input type="tel" id="customerPhone"></div>
+                <div class="form-group"><label>🏙️ المدينة/الحي *</label><input type="text" id="customerCity"></div>
+                <div class="form-group"><label>🏠 العنوان التفصيلي *</label><textarea id="customerAddress"></textarea></div>
+                <button class="confirm-btn" onclick="Location.confirmManual()">✅ تأكيد</button>
+            </div>
+        </div>
+        <div id="successScreen" style="display:none;">
+            <div style="text-align:center; padding:30px 20px;">
+                <div style="font-size:80px; margin-bottom:15px;">✅</div>
+                <h2 style="color:#059669; margin-bottom:10px;">تم استلام طلبك!</h2>
+                <p style="color:#6b7280;">🕐 وقت التوصيل: <strong>30-45 دقيقة</strong></p>
+                <p style="margin-top:15px; padding:12px; background:#f0fdf4; border-radius:10px; color:#065f46;">
+                    🎉 حصلت على <strong id="orderPoints">0</strong> نقطة إضافية!
+                </p>
+                <button class="confirm-btn" style="margin-top:20px;" onclick="Location.resetOrder()">🏠 العودة</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal استبدال المكافأة ===== -->
+<div class="modal-overlay" id="rewardModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🎁 استبدال المكافأة</h2>
+            <button class="close-btn" onclick="Points.closeRewardModal()">✕</button>
+        </div>
+        <div id="rewardContent"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ============================================
+// ===== Utils - دوال مساعدة =====
+// ============================================
+const Utils = {
+    showToast(msg, type = '') {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    },
+    storage: {
+        get(key, defaultValue = null) {
+            const v = localStorage.getItem(key);
+            if (v === null) return defaultValue;
+            try { return JSON.parse(v); } catch { return v; }
+        },
+        set(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    },
+    generateRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+        return code;
+    },
+    async copyToClipboard(text) {
+        try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
+    }
+};
+
+// ============================================
+// ===== Points - نظام النقاط =====
+// ============================================
+const Points = {
+    rewards: [
+        { id: 1, name: 'مشروب مجاني', icon: '🥤', points: 50, desc: 'مشروب مع أي طلب', physical: false },
+        { id: 2, name: 'خصم 10%', icon: '💰', points: 100, desc: 'كود خصم لطلبك القادم', physical: false },
+        { id: 3, name: 'طبق جانبي', icon: '🍟', points: 150, desc: 'بطاطس أو سلطة مجاناً', physical: false },
+        { id: 4, name: 'وجبة مجانية', icon: '🍔', points: 300, desc: 'وجبة كاملة مع توصيل', physical: true },
+        { id: 5, name: 'عضوية VIP', icon: '👑', points: 500, desc: 'خصم 20% لمدة شهر', physical: false },
+        { id: 6, name: 'هدية مميزة', icon: '🎁', points: 1000, desc: 'هدية فاخرة إلى عنوانك', physical: true }
+    ],
+    userPoints: 0,
+
+    init() {
+        this.userPoints = Utils.storage.get('userPoints', 0);
+        this.updateUI();
+    },
+    add(amount, reason) {
+        this.userPoints += amount;
+        Utils.storage.set('userPoints', this.userPoints);
+        this.updateUI();
+        Utils.showToast(`⭐ +${amount} نقطة (${reason})`, 'success');
+    },
+    deduct(amount) {
+        if (this.userPoints < amount) return false;
+        this.userPoints -= amount;
+        Utils.storage.set('userPoints', this.userPoints);
+        this.updateUI();
+        return true;
+    },
+    updateUI() {
+        const t = document.getElementById('totalPoints');
+        const b = document.getElementById('totalPointsBadge');
+        if (t) t.textContent = this.userPoints;
+        if (b) b.textContent = this.userPoints;
+    },
+    renderRewards() {
+        const grid = document.getElementById('rewardsGrid');
+        if (!grid) return;
+        grid.innerHTML = this.rewards.map(r => {
+            const unlocked = this.userPoints >= r.points;
+            const progress = Math.min(100, (this.userPoints / r.points) * 100);
+            return `<div class="reward-card ${unlocked ? 'unlocked' : 'locked'}">
+                <div class="icon">${r.icon}</div>
+                <h4>${r.name}</h4>
+                <div class="req">${r.desc}</div>
+                <div class="req"><strong>${r.points}</strong> نقطة</div>
+                <div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div>
+                ${unlocked 
+                    ? `<button class="game-btn primary" style="margin-top:10px; width:100%;" onclick="Points.openRewardModal(${r.id})">🎁 استبدال</button>` 
+                    : `<div style="margin-top:8px; font-size:12px; color:#9ca3af;">ينقصك ${r.points - this.userPoints} نقطة</div>`}
+            </div>`;
+        }).join('');
+    },
+    openRewardModal(id) {
+        const r = this.rewards.find(x => x.id === id);
+        if (!r || this.userPoints < r.points) return;
+
+        const content = document.getElementById('rewardContent');
+        if (r.physical) {
+            // مكافأة مادية - نطلب عنوان واضح بموافقة صريحة
+            content.innerHTML = `
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div style="font-size:60px;">${r.icon}</div>
+                    <h3 style="color:#065f46; margin:10px 0;">${r.name}</h3>
+                    <p style="color:#6b7280;">${r.desc}</p>
+                    <p style="margin-top:10px; padding:10px; background:#f0fdf4; border-radius:10px; color:#065f46;">
+                        التكلفة: <strong>${r.points} نقطة</strong>
+                    </p>
+                </div>
+
+                <div class="privacy-notice">
+                    <h4>📦 نحتاج عنوانك لإرسال الهدية</h4>
+                    <p>ستحتاج لإدخال عنوانك <strong>طوعاً</strong> لاستلام الهدية. معلوماتك لن تُستخدم إلا لهذا الغرض فقط.</p>
+                </div>
+
+                <div class="form-group"><label>👤 الاسم الكامل *</label><input type="text" id="rewardName" placeholder="مثال: أحمد محمد"></div>
+                <div class="form-group"><label>📱 رقم الهاتف *</label><input type="tel" id="rewardPhone" placeholder="05xxxxxxxx"></div>
+                <div class="form-group"><label>🏙️ المدينة / الحي *</label><input type="text" id="rewardCity" placeholder="مثال: الرياض - حي النرجس"></div>
+                <div class="form-group"><label>🏠 العنوان التفصيلي *</label><textarea id="rewardAddress" placeholder="الشارع، رقم المبنى، الطابق، أي معالم قريبة..."></textarea></div>
+                <div class="form-group"><label>📝 ملاحظات إضافية (اختياري)</label><textarea id="rewardNotes" placeholder="مثال: اتصل قبل الوصول..."></textarea></div>
+
+                <div class="consent-checkbox">
+                    <input type="checkbox" id="consentCheck">
+                    <label for="consentCheck">
+                        ✅ أوافق <strong>صراحةً</strong> على مشاركة عنواني أعلاه لاستلام الهدية، 
+                        وأفهم أن معلوماتي ستُستخدم فقط لهذا الغرض.
+                    </label>
+                </div>
+
+                <button class="confirm-btn" onclick="Points.confirmRedeem(${r.id})">
+                    🎁 تأكيد الاستبدال وإرسال الهدية
+                </button>
+            `;
+        } else {
+            // مكافأة رقمية
+            content.innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <div style="font-size:80px;">${r.icon}</div>
+                    <h3 style="color:#065f46; margin:15px 0;">${r.name}</h3>
+                    <p style="color:#6b7280; margin-bottom:20px;">${r.desc}</p>
+                    <p style="padding:15px; background:#f0fdf4; border-radius:10px; color:#065f46;">
+                        التكلفة: <strong>${r.points} نقطة</strong>
+                    </p>
+                    <button class="confirm-btn" style="margin-top:20px;" onclick="Points.redeemDigital(${r.id})">
+                        ✅ استبدال الآن
+                    </button>
+                </div>
+            `;
+        }
+        document.getElementById('rewardModal').classList.add('active');
+    },
+    closeRewardModal() {
+        document.getElementById('rewardModal').classList.remove('active');
+    },
+    confirmRedeem(id) {
+        const r = this.rewards.find(x => x.id === id);
+        const name = document.getElementById('rewardName').value.trim();
+        const phone = document.getElementById('rewardPhone').value.trim();
+        const city = document.getElementById('rewardCity').value.trim();
+        const address = document.getElementById('rewardAddress').value.trim();
+        const notes = document.getElementById('rewardNotes').value.trim();
+        const consent = document.getElementById('consentCheck').checked;
+
+        if (!name || !phone || !city || !address) {
+            Utils.showToast('❌ يرجى ملء جميع الحقول المطلوبة', 'error');
+            return;
+        }
+        if (!consent) {
+            Utils.showToast('❌ يجب الموافقة على شروط الاستبدال', 'error');
+            return;
         }
 
-        // ========== تحديد نوع الجهاز والمتصفح ==========
-        function getDeviceInfo() {
-            const ua = navigator.userAgent;
-            const info = {};
+        // حفظ الطلب (في حالة حقيقية يُرسل للـ backend)
+        const order = {
+            rewardId: r.id, rewardName: r.name,
+            customer: { name, phone, address: `${city} - ${address}`, notes },
+            timestamp: new Date().toISOString()
+        };
+        console.log('📦 طلب مكافأة:', order);
 
-            // --- نظام التشغيل ---
-            if (/Windows NT 10/.test(ua)) info.os = 'Windows 10/11';
-            else if (/Windows NT 6.3/.test(ua)) info.os = 'Windows 8.1';
-            else if (/Windows NT 6.2/.test(ua)) info.os = 'Windows 8';
-            else if (/Windows NT 6.1/.test(ua)) info.os = 'Windows 7';
-            else if (/Windows/.test(ua)) info.os = 'Windows';
-            else if (/Mac OS X/.test(ua)) info.os = 'macOS ' + ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g, '.') || '';
-            else if (/Android/.test(ua)) info.os = 'Android ' + (ua.match(/Android ([\d.]+)/)?.[1] || '');
-            else if (/iPhone|iPad|iPod/.test(ua)) {
-                const ver = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g, '.');
-                info.os = /iPad/.test(ua) ? `iPadOS ${ver}` : `iOS ${ver}`;
-            }
-            else if (/Linux/.test(ua)) info.os = 'Linux';
-            else if (/CrOS/.test(ua)) info.os = 'Chrome OS';
-            else info.os = 'غير معروف';
-
-            // --- نوع الجهاز ---
-            const isMobile = /Mobile|Android|iPhone|iPod/.test(ua);
-            const isTablet = /iPad|Android(?!.*Mobile)|Tablet/.test(ua);
-            if (isTablet) info.deviceType = '📱 جهاز لوحي (Tablet)';
-            else if (isMobile) info.deviceType = '📱 هاتف محمول';
-            else info.deviceType = '💻 جهاز كمبيوتر';
-
-            // --- المتصفح ---
-            if (/Edg\//.test(ua)) info.browser = 'Microsoft Edge';
-            else if (/OPR\/|Opera/.test(ua)) info.browser = 'Opera';
-            else if (/Brave/.test(ua) || navigator.brave) info.browser = 'Brave';
-            else if (/Vivaldi/.test(ua)) info.browser = 'Vivaldi';
-            else if (/Chrome/.test(ua) && !/Chromium/.test(ua)) info.browser = 'Google Chrome';
-            else if (/Safari/.test(ua) && !/Chrome/.test(ua)) info.browser = 'Safari';
-            else if (/Firefox/.test(ua)) info.browser = 'Mozilla Firefox';
-            else info.browser = 'متصفح آخر';
-
-            // --- إصدار المتصفح ---
-            const versionMatch = ua.match(/(Edg|OPR|Chrome|Version|Firefox)\/([\d.]+)/);
-            info.browserVersion = versionMatch ? versionMatch[2] : 'غير معروف';
-
-            // --- اللغة ---
-            info.language = navigator.language || 'غير معروف';
-
-            // --- المنصة ---
-            info.platform = navigator.platform || 'غير معروف';
-
-            // --- النوافذ ---
-            info.screenSize = `${screen.width} × ${screen.height}`;
-            info.windowSize = `${window.innerWidth} × ${window.innerHeight}`;
-
-            // --- وحدة المعالجة المركزية ---
-            info.cores = navigator.hardwareConcurrency || 'غير معروف';
-
-            // --- الذاكرة ---
-            info.ram = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'غير متاح';
-
-            // --- الاتصال بالإنترنت ---
-            info.online = navigator.onLine ? '✅ متصل' : '❌ غير متصل';
-            if (navigator.connection) {
-                info.connectionType = navigator.connection.effectiveType || 'غير معروف';
-            }
-
-            // --- اللمس ---
-            info.touchSupport = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 
-                ? '✅ مدعوم' : '❌ غير مدعوم';
-
-            // --- cookies ---
-            info.cookies = navigator.cookieEnabled ? '✅ مفعّلة' : '❌ معطّلة';
-
-            // --- المنطقة الزمنية ---
-            info.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-            return info;
+        if (this.deduct(r.points)) {
+            this.closeRewardModal();
+            this.renderRewards();
+            Utils.showToast(`🎉 تم طلب "${r.name}"! سنتواصل معك قريباً`, 'success');
         }
+    },
+    redeemDigital(id) {
+        const r = this.rewards.find(x => x.id === id);
+        if (this.deduct(r.points)) {
+            this.closeRewardModal();
+            this.renderRewards();
+            // توليد كود خصم مثلاً
+            const code = 'GIFT-' + Utils.generateRoomCode();
+            Utils.showToast(`🎁 كود المكافأة: ${code}`, 'success');
+        }
+    }
+};
 
-        // ========== عرض المعلومات ==========
-        function displayInfo() {
-            const info = getDeviceInfo();
-            const grid = document.getElementById('infoGrid');
+// ============================================
+// ===== Menu - القائمة والسلة =====
+// ============================================
+const Menu = {
+    items: [
+        { id: 1, name: 'برجر كلاسيك', desc: 'لحم بقري مع جبنة شيدر', price: 25, emoji: '🍔' },
+        { id: 2, name: 'بيتزا مارجريتا', desc: 'جبنة موزاريلا وطماطم', price: 35, emoji: '🍕' },
+        { id: 3, name: 'شاورما دجاج', desc: 'دجاج مشوي مع ثوم', price: 18, emoji: '🌯' },
+        { id: 4, name: 'كبسة لحم', desc: 'أرز بسمتي مع لحم', price: 45, emoji: '🍛' },
+        { id: 5, name: 'سلطة سيزر', desc: 'خس مع دجاج مشوي', price: 22, emoji: '🥗' },
+        { id: 6, name: 'باستا ألفريدو', desc: 'معكرونة بصلصة كريما', price: 28, emoji: '🍝' },
+        { id: 7, name: 'سوشي مشكل', desc: '8 قطع سوشي', price: 55, emoji: '🍣' },
+        { id: 8, name: 'كنافة', desc: 'حلوى بالجبنة', price: 15, emoji: '🍰' }
+    ],
+    cart: {},
 
-            const items = [
-                { emoji: '💻', label: 'نوع الجهاز', value: info.deviceType },
-                { emoji: '⚙️', label: 'نظام التشغيل', value: info.os },
-                { emoji: '🌐', label: 'المتصفح', value: info.browser },
-                { emoji: '🔢', label: 'إصدار المتصفح', value: info.browserVersion },
-                { emoji: '🗣️', label: 'اللغة', value: info.language },
-                { emoji: '🖥️', label: 'المنصة', value: info.platform },
-                { emoji: '📐', label: 'دقة الشاشة', value: info.screenSize },
-                { emoji: '🪟', label: 'حجم النافذة', value: info.windowSize },
-                { emoji: '🧠', label: 'أنوية المعالج', value: info.cores },
-                { emoji: '💾', label: 'الذاكرة (RAM)', value: info.ram },
-                { emoji: '📡', label: 'حالة الاتصال', value: info.online },
-                { emoji: '📶', label: 'نوع الاتصال', value: info.connectionType || 'غير متاح' },
-                { emoji: '👆', label: 'دعم اللمس', value: info.touchSupport },
-                { emoji: '🍪', label: 'ملفات الكوكيز', value: info.cookies },
-                { emoji: '🕐', label: 'المنطقة الزمنية', value: info.timezone }
-            ];
-
-            grid.innerHTML = items.map(item => `
-                <div class="info-item">
-                    <div class="emoji">${item.emoji}</div>
-                    <div class="details">
-                        <div class="info-label">${item.label}</div>
-                        <div class="info-value">${item.value}</div>
+    init() { this.render(); },
+    render() {
+        const grid = document.getElementById('menuGrid');
+        if (!grid) return;
+        grid.innerHTML = this.items.map(item => `
+            <div class="menu-item">
+                <div class="img">${item.emoji}</div>
+                <div class="info">
+                    <h3>${item.name}</h3>
+                    <div class="desc">${item.desc}</div>
+                    <div class="footer">
+                        <span class="price">${item.price} ر.س</span>
+                        <button class="add-btn" onclick="Menu.addToCart(${item.id})">+ إضافة</button>
                     </div>
                 </div>
-            `).join('');
+            </div>
+        `).join('');
+    },
+    addToCart(id) {
+        this.cart[id] = (this.cart[id] || 0) + 1;
+        this.updateBadge();
+        Utils.showToast('✅ تمت الإضافة للسلة', 'success');
+    },
+    updateBadge() {
+        const total = Object.values(this.cart).reduce((a, b) => a + b, 0);
+        const b = document.getElementById('cartBadge');
+        if (b) b.textContent = total;
+    },
+    changeQty(id, delta) {
+        this.cart[id] = (this.cart[id] || 0) + delta;
+        if (this.cart[id] <= 0) delete this.cart[id];
+        this.updateBadge();
+        this.renderCart();
+    },
+    renderCart() {
+        const content = document.getElementById('cartContent');
+        if (!content) return;
+        const items = Object.keys(this.cart);
+        if (items.length === 0) {
+            content.innerHTML = `<div style="text-align:center; padding:40px; color:#9ca3af;">
+                <div style="font-size:60px;">🛒</div><p>سلتك فارغة</p></div>`;
+            return;
         }
-
-        // ========== نسخ IP ==========
-        function copyIP() {
-            const ip = document.getElementById('ipAddress').textContent;
-            if (!ip || ip.includes('جاري') || ip.includes('خطأ')) {
-                showToast('⚠️ لا يوجد IP للنسخ');
-                return;
-            }
-            navigator.clipboard.writeText(ip).then(() => {
-                showToast('✅ تم نسخ IP بنجاح!');
-            }).catch(() => {
-                // fallback
-                const temp = document.createElement('textarea');
-                temp.value = ip;
-                document.body.appendChild(temp);
-                temp.select();
-                document.execCommand('copy');
-                document.body.removeChild(temp);
-                showToast('✅ تم النسخ!');
-            });
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
-        }
-
-        // ========== التشغيل ==========
-        fetchIP();
-        displayInfo();
-
-        // تحديث حجم النافذة ديناميكياً
-        window.addEventListener('resize', () => {
-            const windowItem = document.querySelectorAll('.info-value')[7];
-            if (windowItem) windowItem.textContent = `${window.innerWidth} × ${window.innerHeight}`;
+        let total = 0, html = '';
+        items.forEach(id => {
+            const item = this.items.find(m => m.id == id);
+            const sub = item.price * this.cart[id];
+            total += sub;
+            html += `<div class="cart-item">
+                <div class="name">${item.emoji} ${item.name}</div>
+                <div class="qty-controls">
+                    <button class="qty-btn" onclick="Menu.changeQty(${id}, -1)">−</button>
+                    <span style="font-weight:bold; min-width:20px; text-align:center;">${this.cart[id]}</span>
+                    <button class="qty-btn" onclick="Menu.changeQty(${id}, 1)">+</button>
+                </div>
+                <div style="min-width:70px; text-align:left; color:#d97706; font-weight:bold;">${sub} ر.س</div>
+            </div>`;
         });
-    </script>
+        html += `<div class="total-row"><span>الإجمالي:</span><span>${total} ر.س</span></div>
+            <button class="checkout-btn" onclick="Location.open()">📍 متابعة للطلب</button>`;
+        content.innerHTML = html;
+    },
+    openCart() { this.renderCart(); document.getElementById('cartModal').classList.add('active'); },
+    closeCart() { document.getElementById('cartModal').classList.remove('active'); },
+    getTotal() {
+        return Object.keys(this.cart).reduce((t, id) => {
+            return t + this.items.find(m => m.id == id).price * this.cart[id];
+        }, 0);
+    },
+    clear() { this.cart = {}; this.updateBadge(); }
+};
+
+// ============================================
+// ===== Location - تحديد الموقع =====
+// ============================================
+const Location = {
+    userLocation: null, map: null, marker: null,
+
+    open() {
+        Menu.closeCart();
+        document.getElementById('locationModal').classList.add('active');
+        document.getElementById('locationStep1').style.display = 'block';
+        document.getElementById('successScreen').style.display = 'none';
+    },
+    close() { document.getElementById('locationModal').classList.remove('active'); },
+    showStatus(msg, type) {
+        const el = document.getElementById('statusMsg');
+        el.textContent = msg; el.className = `status-msg show ${type}`;
+    },
+    requestGPS() {
+        if (!navigator.geolocation) {
+            this.showStatus('❌ متصفحك لا يدعم تحديد الموقع', 'error');
+            return;
+        }
+        this.showStatus('⏳ جاري تحديد موقعك...', 'info');
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                this.userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+                this.showStatus(`✅ تم تحديد موقعك (الدقة: ${Math.round(this.userLocation.accuracy)}م)`, 'success');
+                this.showMap();
+            },
+            () => this.showStatus('❌ رفضت الإذن. يرجى الإدخال اليدوي.', 'error'),
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    },
+    showMap() {
+        document.getElementById('mapContainer').style.display = 'block';
+        setTimeout(() => {
+            if (!this.map) {
+                this.map = L.map('map').setView([this.userLocation.lat, this.userLocation.lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+                this.marker = L.marker([this.userLocation.lat, this.userLocation.lng]).addTo(this.map).bindPopup('📍 موقعك').openPopup();
+            } else {
+                this.map.setView([this.userLocation.lat, this.userLocation.lng], 16);
+                this.marker.setLatLng([this.userLocation.lat, this.userLocation.lng]);
+            }
+        }, 100);
+    },
+    showManualForm() {
+        document.getElementById('manualForm').classList.add('active');
+        document.getElementById('mapContainer').style.display = 'none';
+    },
+    confirmGPS() {
+        this.showStatus('⏳ جاري الحصول على العنوان...', 'info');
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${this.userLocation.lat}&lon=${this.userLocation.lng}&accept-language=ar`)
+            .then(r => r.json())
+            .then(d => this.submitOrder({
+                name: 'زبون المطعم', phone: '-',
+                address: d.display_name || `${this.userLocation.lat.toFixed(5)}, ${this.userLocation.lng.toFixed(5)}`,
+                method: 'GPS'
+            }))
+            .catch(() => this.submitOrder({
+                name: 'زبون المطعم', phone: '-',
+                address: `${this.userLocation.lat.toFixed(5)}, ${this.userLocation.lng.toFixed(5)}`,
+                method: 'GPS'
+            }));
+    },
+    confirmManual() {
+        const name = document.getElementById('customerName').value.trim();
+        const phone = document.getElementById('customerPhone').value.trim();
+        const city = document.getElementById('customerCity').value.trim();
+        const address = document.getElementById('customerAddress').value.trim();
+        if (!name || !phone || !city || !address) {
+            this.showStatus('❌ يرجى ملء جميع الحقول', 'error');
+            return;
+        }
+        this.submitOrder({ name, phone, address: `${city} - ${address}`, method: 'يدوي' });
+    },
+    submitOrder(customer) {
+        const total = Menu.getTotal();
+        const earned = Math.floor(total / 10);
+        Points.add(earned, 'طلب طعام');
+        document.getElementById('locationStep1').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('orderPoints').textContent = earned;
+    },
+    resetOrder() {
+        Menu.clear();
+        this.close();
+        document.getElementById('manualForm').classList.remove('active');
+        document.getElementById('mapContainer').style.display = 'none';
+        document.getElementById('statusMsg').className = 'status-msg';
+        ['customerName','customerPhone','customerCity','customerAddress'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        App.openTab('menu');
+    }
+};
+
+// ============================================
+// ===== DeviceInfo - معلومات الجهاز =====
+// ============================================
+const DeviceInfo = {
+    async fetchIP() {
+        const el = document.getElementById('ipAddress');
+        const services = [
+            'https://api.ipify.org?format=json',
+            'https://api.my-ip.io/v2/ip.json'
+        ];
+        for (const url of services) {
+            try {
+                const r = await fetch(url);
+                const d = await r.json();
+                el.textContent = d.ip;
+                return;
+            } catch { continue; }
+        }
+        el.textContent = 'تعذر الحصول على IP';
+    },
+    getInfo() {
+        const ua = navigator.userAgent;
+        const info = {};
+
+        // نظام التشغيل
+        if (/Windows NT 10/.test(ua)) info.os = 'Windows 10/11';
+        else if (/Windows NT 6.3/.test(ua)) info.os = 'Windows 8.1';
+        else if (/Windows NT 6.1/.test(ua)) info.os = 'Windows 7';
+        else if (/Windows/.test(ua)) info.os = 'Windows';
+        else if (/Mac OS X/.test(ua)) info.os = 'macOS ' + (ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g, '.') || '');
+        else if (/Android/.test(ua)) info.os = 'Android ' + (ua.match(/Android ([\d.]+)/)?.[1] || '');
+        else if (/iPhone|iPad|iPod/.test(ua)) {
+            const v = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g, '.');
+            info.os = /iPad/.test(ua) ? `iPadOS ${v}` : `iOS ${v}`;
+        }
+        else if (/Linux/.test(ua)) info.os = 'Linux';
+        else if (/CrOS/.test(ua)) info.os = 'Chrome OS';
+        else info.os = 'غير معروف';
+
+        // نوع الجهاز
+        const isMobile = /Mobile|Android|iPhone|iPod/.test(ua);
+        const isTablet = /iPad|Android(?!.*Mobile)|Tablet/.test(ua);
+        info.deviceType = isTablet ? '📱 جهاز لوحي' : (isMobile ? '📱 هاتف محمول' : '💻 كمبيوتر');
+
+        // المتصفح
+        if (/Edg\//.test(ua)) info.browser = 'Microsoft Edge';
+        else if (/OPR\/|Opera/.test(ua)) info.browser = 'Opera';
+        else if (/Brave/.test(ua) || navigator.brave) info.browser = 'Brave';
+        else if (/Vivaldi/.test(ua)) info.browser = 'Vivaldi';
+        else if (/Chrome/.test(ua) && !/Chromium/.test(ua)) info.browser = 'Google Chrome';
+        else if (/Safari/.test(ua) && !/Chrome/.test(ua)) info.browser = 'Safari';
+        else if (/Firefox/.test(ua)) info.browser = 'Mozilla Firefox';
+        else info.browser = 'متصفح آخر';
+
+        info.browserVersion = (ua.match(/(Edg|OPR|Chrome|Version|Firefox)\/([\d.]+)/) || [])[2] || 'غير معروف';
+        info.language = navigator.language || 'غير معروف';
+        info.platform = navigator.platform || 'غير معروف';
+        info.screenSize = `${screen.width} × ${screen.height}`;
+        info.windowSize = `${window.innerWidth} × ${window.innerHeight}`;
+        info.cores = navigator.hardwareConcurrency || 'غير معروف';
+        info.ram = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'غير متاح';
+        info.online = navigator.onLine ? '✅ متصل' : '❌ غير متصل';
+        info.connectionType = navigator.connection?.effectiveType || 'غير متاح';
+        info.touchSupport = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 ? '✅ مدعوم' : '❌ غير مدعوم';
+        info.cookies = navigator.cookieEnabled ? '✅ مفعّلة' : '❌ معطّلة';
+        info.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return info;
+    },
+    display() {
+        const info = this.getInfo();
+        const grid = document.getElementById('infoGrid');
+        const items = [
+            { emoji: '💻', label: 'نوع الجهاز', value: info.deviceType },
+            { emoji: '⚙️', label: 'نظام التشغيل', value: info.os },
+            { emoji: '🌐', label: 'المتصفح', value: info.browser },
+            { emoji: '🔢', label: 'إصدار المتصفح', value: info.browserVersion },
+            { emoji: '🗣️', label: 'اللغة', value: info.language },
+            { emoji: '🖥️', label: 'المنصة', value: info.platform },
+            { emoji: '📐', label: 'دقة الشاشة', value: info.screenSize },
+            { emoji: '🪟', label: 'حجم النافذة', value: info.windowSize },
+            { emoji: '🧠', label: 'أنوية المعالج', value: info.cores },
+            { emoji: '💾', label: 'الذاكرة (RAM)', value: info.ram },
+            { emoji: '📡', label: 'حالة الاتصال', value: info.online },
+            { emoji: '📶', label: 'نوع الاتصال', value: info.connectionType },
+            { emoji: '👆', label: 'دعم اللمس', value: info.touchSupport },
+            { emoji: '🍪', label: 'الكوكيز', value: info.cookies },
+            { emoji: '🕐', label: 'المنطقة الزمنية', value: info.timezone }
+        ];
+        grid.innerHTML = items.map(i => `
+            <div class="info-item">
+                <div class="emoji">${i.emoji}</div>
+                <div class="details">
+                    <div class="info-label">${i.label}</div>
+                    <div class="info-value">${i.value}</div>
+                </div>
+            </div>
+        `).join('');
+    },
+    async copyIP() {
+        const ip = document.getElementById('ipAddress').textContent;
+        if (!ip || ip.includes('جاري') || ip.includes('تعذر')) {
+            Utils.showToast('⚠️ لا يوجد IP للنسخ', 'error');
+            return;
+        }
+        if (await Utils.copyToClipboard(ip)) {
+            Utils.showToast('✅ تم نسخ IP بنجاح!', 'success');
+        } else {
+            Utils.showToast('❌ فشل النسخ', 'error');
+        }
+    },
+    refresh() {
+        this.fetchIP();
+        this.display();
+        Utils.showToast('🔄 تم التحديث', 'success');
+    },
+    checkDailyBonus() {
+        const lastVisit = Utils.storage.get('deviceInfoLastBonus', null);
+        const today = new Date().toDateString();
+        if (lastVisit !== today) {
+            Utils.storage.set('deviceInfoLastBonus', today);
+            setTimeout(() => Points.add(5, 'زيارة صفحة معلومات الجهاز'), 800);
+        }
+    }
+};
+
+// ============================================
+// ===== Game - لعبة XO =====
+// ============================================
+const Game = {
+    board: Array(9).fill(''), currentTurn: 'X',
+    scores: { X: 0, O: 0 }, gameActive: false, mode: null,
+
+    startLocal() {
+        this.mode = 'local';
+        this.reset();
+        this.showScreen();
+        setTimeout(() => {
+            document.getElementById('p1Name').textContent = 'لاعب 1';
+            document.getElementById('p2Name').textContent = 'لاعب 2';
+        }, 50);
+    },
+    showScreen() {
+        document.getElementById('gameModeSelect').style.display = 'none';
+        document.getElementById('onlineLobby').style.display = 'none';
+        const s = document.getElementById('gameScreen');
+        s.style.display = 'block';
+        s.innerHTML = `
+            <div class="game-container">
+                <div class="game-header">
+                    <h3 style="color:#4c1d95;">🎮 لعبة XO</h3>
+                    <button class="back-btn" onclick="Game.exit()">🚪 خروج</button>
+                </div>
+                <div class="player-info">
+                    <div class="player" id="player1Box">
+                        <div class="symbol">❌</div>
+                        <div class="name" id="p1Name">لاعب 1</div>
+                        <div class="score" id="p1Score">0</div>
+                    </div>
+                    <div style="display:flex; align-items:center; color:#9ca3af; font-weight:bold;">VS</div>
+                    <div class="player" id="player2Box">
+                        <div class="symbol">⭕</div>
+                        <div class="name" id="p2Name">لاعب 2</div>
+                        <div class="score" id="p2Score">0</div>
+                    </div>
+                </div>
+                <div class="game-status" id="gameStatus">دور اللاعب ❌</div>
+                <div class="board" id="board"></div>
+                <div class="game-actions">
+                    <button class="game-btn secondary" onclick="Game.reset()">🔄 جولة جديدة</button>
+                </div>
+            </div>
+        `;
+        this.renderBoard();
+    },
+    exit() {
+        document.getElementById('gameScreen').style.display = 'none';
+        document.getElementById('gameModeSelect').style.display = 'block';
+        this.gameActive = false;
+        PeerGame.cleanup();
+    },
+    reset() {
+        this.board = Array(9).fill('');
+        this.currentTurn = 'X';
+        this.scores = { X: 0, O: 0 };
+        this.gameActive = true;
+        this.renderBoard();
+        this.updateTurnUI();
+        this.updateScoresUI();
+    },
+    renderBoard() {
+        const el = document.getElementById('board');
+        if (!el) return;
+        el.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const c = document.createElement('div');
+            c.className = 'cell' + (this.board[i] ? ' taken ' + this.board[i].toLowerCase() : '');
+            c.textContent = this.board[i] === 'X' ? '❌' : this.board[i] === 'O' ? '⭕' : '';
+            c.onclick = () => this.handleClick(i);
+            el.appendChild(c);
+        }
+    },
+    handleClick(i) {
+        if (!this.gameActive || this.board[i]) return;
+        if (this.mode === 'online' && this.currentTurn !== PeerGame.mySymbol) {
+            Utils.showToast('⏳ ليس دورك', 'error');
+            return;
+        }
+        if (this.mode === 'online') PeerGame.sendMove(i);
+        this.makeMove(i);
+    },
+    makeMove(i) {
+        if (!this.gameActive || this.board[i]) return;
+        this.board[i] = this.currentTurn;
+        this.renderBoard();
+        const w = this.checkWin();
+        if (w) {
+            this.gameActive = false;
+            w.forEach(i => document.querySelectorAll('.cell')[i].classList.add('win'));
+            const winner = this.currentTurn;
+            this.scores[winner]++;
+            this.updateScoresUI();
+            const name = this.getWinnerName(winner);
+            document.getElementById('gameStatus').textContent = `🎉 فاز ${name}!`;
+            if (this.mode === 'local' || winner === PeerGame.mySymbol) {
+                Points.add(10, 'فوز في XO');
+            }
+            setTimeout(() => { if (confirm(`فاز ${name}! جولة جديدة؟`)) this.startNewRound(); }, 800);
+            return;
+        }
+        if (this.board.every(c => c)) {
+            this.gameActive = false;
+            document.getElementById('gameStatus').textContent = '🤝 تعادل!';
+            if (this.mode === 'local' || true) Points.add(3, 'تعادل في XO');
+            setTimeout(() => { if (confirm('تعادل! جولة جديدة؟')) this.startNewRound(); }, 800);
+            return;
+        }
+        this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
+        this.updateTurnUI();
+    },
+    startNewRound() {
+        this.board = Array(9).fill('');
+        this.currentTurn = 'X';
+        this.gameActive = true;
+        this.renderBoard();
+        this.updateTurnUI();
+        if (this.mode === 'online' && PeerGame.isHost && PeerGame.conn?.open) {
+            PeerGame.conn.send({ type: 'start' });
+        }
+    },
+    checkWin() {
+        const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (const [a,b,c] of wins) {
+            if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) return [a,b,c];
+        }
+        return null;
+    },
+    updateTurnUI() {
+        const s = document.getElementById('gameStatus');
+        if (s) s.textContent = `دور اللاعب ${this.currentTurn === 'X' ? '❌' : '⭕'}`;
+        const p1 = document.getElementById('player1Box');
+        const p2 = document.getElementById('player2Box');
+        if (p1) p1.classList.toggle('active', this.currentTurn === 'X');
+        if (p2) p2.classList.toggle('active', this.currentTurn === 'O');
+    },
+    updateScoresUI() {
+        const s1 = document.getElementById('p1Score');
+        const s2 = document.getElementById('p2Score');
+        if (s1) s1.textContent = this.scores.X;
+        if (s2) s2.textContent = this.scores.O;
+    },
+    getWinnerName(s) {
+        if (this.mode === 'local') return s === 'X' ? 'لاعب 1' : 'لاعب 2';
+        return s === PeerGame.mySymbol ? 'أنت' : 'الخصم';
+    }
+};
+
+// ============================================
+// ===== PeerGame - اللعب الأونلاين =====
+// ============================================
+const PeerGame = {
+    peer: null, conn: null, isHost: false, mySymbol: 'X',
+
+    showLobby() {
+        document.getElementById('gameModeSelect').style.display = 'none';
+        const l = document.getElementById('onlineLobby');
+        l.style.display = 'block';
+        l.innerHTML = `
+            <div class="lobby">
+                <h3 style="color:#4c1d95; text-align:center; margin-bottom:15px;">🌐 غرفة اللعب الأونلاين</h3>
+                <div class="lobby-section">
+                    <h4>🏠 إنشاء غرفة جديدة</h4>
+                    <p>أنشئ غرفة وشارك الكود مع صديقك:</p>
+                    <button class="game-btn primary" style="width:100%;" onclick="PeerGame.createRoom()">➕ إنشاء غرفة</button>
+                    <div id="createdRoom" style="display:none;"></div>
+                </div>
+                <div class="lobby-section">
+                    <h4>🚪 الانضمام لغرفة</h4>
+                    <p>أدخل الكود الذي شاركه صديقك:</p>
+                    <div class="input-group">
+                        <input type="text" id="joinCode" placeholder="ABC123" maxlength="6">
+                        <button onclick="PeerGame.joinRoom()">انضمام</button>
+                    </div>
+                    <div class="connection-status" id="joinStatus" style="display:none;"></div>
+                </div>
+                <button class="game-btn secondary" style="width:100%; margin-top:10px;" onclick="PeerGame.back()">⬅️ العودة</button>
+            </div>
+        `;
+    },
+    back() {
+        this.cleanup();
+        document.getElementById('onlineLobby').style.display = 'none';
+        document.getElementById('gameModeSelect').style.display = 'block';
+    },
+    cleanup() {
+        if (this.peer) { this.peer.destroy(); this.peer = null; }
+        if (this.conn) { this.conn.close(); this.conn = null; }
+    },
+    createRoom() {
+        const code = Utils.generateRoomCode();
+        this.isHost = true;
+        this.mySymbol = 'X';
+        this.peer = new Peer('xo-game-' + code, { debug: 0 });
+        this.peer.on('open', () => {
+            const r = document.getElementById('createdRoom');
+            r.style.display = 'block';
+            r.innerHTML = `
+                <p style="margin-top:10px;">📋 شارك هذا الكود:</p>
+                <div class="room-code" onclick="PeerGame.copyCode('${code}')">${code}</div>
+                <div class="connection-status connecting" id="hostStatus">⏳ في انتظار لاعب آخر...</div>
+            `;
+        });
+        this.peer.on('connection', c => { this.conn = c; this.setup(); });
+        this.peer.on('error', e => {
+            const s = document.getElementById('hostStatus');
+            if (s) { s.className = 'connection-status error'; s.textContent = '❌ خطأ: ' + e.type; }
+        });
+    },
+    joinRoom() {
+        const code = document.getElementById('joinCode').value.trim().toUpperCase();
+        if (code.length !== 6) { Utils.showToast('❌ كود غير صحيح', 'error'); return; }
+        this.isHost = false;
+        this.mySymbol = 'O';
+        const s = document.getElementById('joinStatus');
+        s.style.display = 'block';
+        s.className = 'connection-status connecting';
+        s.textContent = '⏳ جاري الانضمام...';
+        this.peer = new Peer({ debug: 0 });
+        this.peer.on('open', () => {
+            this.conn = this.peer.connect('xo-game-' + code, { reliable: true });
+            this.setup();
+        });
+        this.peer.on('error', e => {
+            s.className = 'connection-status error';
+            s.textContent = '❌ خطأ: ' + e.type;
+        });
+    },
+    setup() {
+        const s = this.isHost ? document.getElementById('hostStatus') : document.getElementById('joinStatus');
+        this.conn.on('open', () => {
+            s.className = 'connection-status connected';
+            s.textContent = '✅ تم الاتصال!';
+            setTimeout(() => {
+                Game.mode = 'online';
+                Game.showScreen();
+                setTimeout(() => {
+                    document.getElementById('p1Name').textContent = this.isHost ? 'أنت' : 'المنشئ';
+                    document.getElementById('p2Name').textContent = this.isHost ? 'المنضم' : 'أنت';
+                }, 50);
+                if (this.isHost) Game.reset();
+            }, 800);
+        });
+        this.conn.on('data', d => this.handle(d));
+        this.conn.on('close', () => {
+            Utils.showToast('❌ انقطع الاتصال', 'error');
+            setTimeout(() => Game.exit(), 2000);
+        });
+    },
+    handle(d) {
+        if (d.type === 'move') Game.makeMove(d.index);
+        else if (d.type === 'start') {
+            Game.board = Array(9).fill('');
+            Game.currentTurn = 'X';
+            Game.gameActive = true;
+            Game.renderBoard();
+            Game.updateTurnUI();
+        }
+    },
+    sendMove(i) {
+        if (this.conn?.open) this.conn.send({ type: 'move', index: i });
+    },
+    async copyCode(c) {
+        if (await Utils.copyToClipboard(c)) Utils.showToast('📋 تم النسخ!', 'success');
+    }
+};
+
+// ============================================
+// ===== App - التطبيق الرئيسي =====
+// ============================================
+const App = {
+    init() {
+        Points.init();
+        Menu.init();
+    },
+    openTab(name) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-tab="${name}"]`)?.classList.add('active');
+        document.getElementById(`tab-${name}`)?.classList.add('active');
+        if (name === 'points') Points.renderRewards();
+        if (name === 'device') {
+            DeviceInfo.fetchIP();
+            DeviceInfo.display();
+            DeviceInfo.checkDailyBonus();
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+window.addEventListener('resize', () => {
+    const w = document.querySelectorAll('.info-value')[7];
+    if (w) w.textContent = `${window.innerWidth} × ${window.innerHeight}`;
+});
+</script>
+
 </body>
 </html>
