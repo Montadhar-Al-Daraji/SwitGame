@@ -3,860 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 لعبة XO - النسخة المُصلحة</title>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        .game-wrapper {
-            background: white; border-radius: 20px; padding: 25px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin-bottom: 20px;
-        }
-        
-        .game-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f3f4f6;
-        }
-        
-        .game-header h3 { color: #4c1d95; font-size: 22px; }
-        
-        .back-btn {
-            background: #f3f4f6; border: none; padding: 8px 15px;
-            border-radius: 20px; cursor: pointer; font-weight: 600; color: #4b5563;
-        }
-        
-        .mode-select {
-            display: flex; flex-direction: column; gap: 10px;
-        }
-        
-        .mode-btn {
-            padding: 15px; border: none; border-radius: 12px;
-            cursor: pointer; font-weight: bold; font-size: 15px;
-            transition: all 0.3s; color: white;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-        }
-        
-        .mode-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3); }
-        .mode-btn.online { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        
-        .player-info {
-            display: flex; justify-content: space-around; align-items: center;
-            margin-bottom: 20px; background: #f9fafb; padding: 15px; border-radius: 12px;
-        }
-        
-        .player {
-            text-align: center; padding: 10px 20px; border-radius: 10px;
-            transition: all 0.3s; min-width: 100px;
-        }
-        
-        .player.active { background: #8b5cf6; color: white; transform: scale(1.05); }
-        .player .symbol { font-size: 32px; font-weight: bold; }
-        .player .name { font-size: 13px; margin-top: 3px; }
-        .player .score { font-size: 20px; font-weight: bold; margin-top: 5px; }
-        
-        .vs { font-size: 20px; font-weight: bold; color: #9ca3af; }
-        
-        .board {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-            background: #e5e7eb; padding: 8px; border-radius: 12px; margin-bottom: 15px;
-            max-width: 350px; margin-left: auto; margin-right: auto;
-        }
-        
-        .cell {
-            aspect-ratio: 1; background: white; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 50px; font-weight: bold; cursor: pointer;
-            transition: all 0.2s; user-select: none;
-        }
-        
-        .cell:hover:not(.taken) { background: #f3f4f6; transform: scale(0.97); }
-        .cell.taken { cursor: not-allowed; }
-        .cell.x { color: #8b5cf6; }
-        .cell.o { color: #ec4899; }
-        .cell.win { background: #fef3c7; animation: winPulse 0.6s ease; }
-        
-        @keyframes winPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-        
-        .game-status {
-            text-align: center; padding: 12px; background: #f9fafb;
-            border-radius: 10px; font-weight: 600; color: #4b5563;
-            margin-bottom: 15px; font-size: 16px;
-        }
-        
-        .reset-btn {
-            width: 100%; padding: 12px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-            color: white; border: none; border-radius: 10px;
-            cursor: pointer; font-weight: bold; font-size: 15px;
-        }
-        
-        /* ===== Lobby Styles ===== */
-        .lobby-section {
-            background: #f9fafb; padding: 20px; border-radius: 12px;
-            border: 2px solid #e5e7eb; margin-bottom: 15px;
-        }
-        
-        .lobby-section h4 { color: #4c1d95; margin-bottom: 10px; font-size: 16px; }
-        .lobby-section p { color: #6b7280; font-size: 13px; margin-bottom: 15px; }
-        
-        .room-code {
-            background: #1f2937; color: #10b981; padding: 15px;
-            border-radius: 10px; text-align: center; font-size: 28px;
-            font-weight: bold; letter-spacing: 5px;
-            font-family: 'Courier New', monospace;
-            margin: 10px 0; cursor: pointer;
-            border: 2px solid #10b981;
-        }
-        
-        .input-group { display: flex; gap: 8px; margin-top: 10px; }
-        
-        .input-group input {
-            flex: 1; padding: 12px; border: 2px solid #e5e7eb;
-            border-radius: 8px; font-size: 16px;
-            font-family: 'Courier New', monospace;
-            text-transform: uppercase; text-align: center;
-            letter-spacing: 3px;
-        }
-        
-        .input-group button {
-            padding: 12px 25px; background: #8b5cf6; color: white;
-            border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
-        }
-        
-        .connection-status {
-            padding: 10px; border-radius: 8px; text-align: center;
-            font-size: 13px; margin-top: 10px; font-weight: 600;
-            display: none;
-        }
-        
-        .connection-status.connecting { background: #fef3c7; color: #92400e; }
-        .connection-status.connected { background: #d1fae5; color: #065f46; }
-        .connection-status.error { background: #fee2e2; color: #991b1b; }
-        
-        .share-btn {
-            padding: 8px 15px; border: none; border-radius: 6px;
-            cursor: pointer; font-weight: 600; font-size: 12px;
-            margin: 3px; color: white;
-        }
-        
-        .share-btn.whatsapp { background: #25d366; }
-        .share-btn.telegram { background: #0088cc; }
-        .share-btn.copy { background: #6b7280; }
-        
-        .quality-indicator {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 15px; background: #f0fdf4;
-            border: 2px solid #10b981; border-radius: 10px;
-            margin-bottom: 15px; font-size: 13px;
-            color: #065f46; font-weight: 600;
-        }
-        
-        .quality-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #10b981; animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        
-        .toast {
-            position: fixed; top: 100px; left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: #1f2937; color: white; padding: 12px 25px;
-            border-radius: 25px; font-size: 14px;
-            transition: transform 0.3s; z-index: 2000;
-        }
-        
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        .toast.success { background: #10b981; }
-        .toast.error { background: #ef4444; }
-        .toast.warning { background: #f59e0b; }
-        
-        .debug-info {
-            background: #1f2937; color: #10b981; padding: 15px;
-            border-radius: 10px; font-family: monospace;
-            font-size: 11px; margin-top: 20px;
-            max-height: 200px; overflow-y: auto;
-        }
-    </style>
+    <title>عالم الألعاب - العب واكسب هدايا!</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- Leaflet للخريطة -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- ملفات CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/games.css">
+    <link rel="stylesheet" href="css/points.css">
+    <link rel="stylesheet" href="css/location.css">
 </head>
 <body>
 
-<div class="container">
-    <div class="game-wrapper">
-        <div class="game-header">
-            <h3>⭕❌ لعبة XO</h3>
-        </div>
-        
-        <!-- ===== شاشة اختيار الوضع ===== -->
-        <div id="modeSelect" class="mode-select">
-            <button class="mode-btn" onclick="startComputerGame()">
-                🤖 ضد الكمبيوتر
-            </button>
-            <button class="mode-btn" onclick="startLocalGame()">
-                👥 محلي (نفس الجهاز)
-            </button>
-            <button class="mode-btn online" onclick="showLobby()">
-                🌍 أونلاين (عبر الإنترنت)
-            </button>
-        </div>
-        
-        <!-- ===== لوبي اللعب الأونلاين ===== -->
-        <div id="lobby" style="display:none;">
-            <div class="game-header">
-                <h3>🌍 اللعب العالمي</h3>
-                <button class="back-btn" onclick="exitLobby()">🚪 رجوع</button>
-            </div>
-            
-            <div class="lobby-section">
-                <h4>🏠 إنشاء غرفة جديدة</h4>
-                <p>أنشئ غرفة وشارك الكود مع صديقك</p>
-                <button class="mode-btn" style="width:100%;" onclick="createRoom()">
-                    ➕ إنشاء غرفة
-                </button>
-                <div id="createdRoom" style="display:none;"></div>
-            </div>
-            
-            <div class="lobby-section">
-                <h4>🚪 الانضمام لغرفة</h4>
-                <p>أدخل الكود الذي شاركه معك صديقك</p>
-                <div class="input-group">
-                    <input type="text" id="joinCode" placeholder="ABC123" maxlength="6">
-                    <button onclick="joinRoom()">انضمام</button>
+<!-- ===== Header ===== -->
+<header>
+    <h1>🎮 عالم الألعاب</h1>
+    <p>العب • اكسب نقاط • اربح هدايا حقيقية!</p>
+    <div class="header-actions">
+        <button class="icon-btn" onclick="App.openTab('points')" title="نقاطي">
+            ⭐<span class="badge points-badge" id="totalPointsBadge">0</span>
+        </button>
+        <button class="icon-btn" id="locationStatusBtn" onclick="UserData.restartTracking()" title="حالة الموقع">
+            📍<span class="badge" id="locationAccuracyBadge" style="background:#6b7280;">-</span>
+        </button>
+    </div>
+</header>
+
+<!-- ===== التبويبات ===== -->
+<div class="tabs">
+    <div class="tab active" data-tab="home" onclick="App.openTab('home')">🏠 الرئيسية</div>
+    <div class="tab" data-tab="games" onclick="App.openTab('games')">🎮 الألعاب</div>
+    <div class="tab" data-tab="points" onclick="App.openTab('points')">⭐ النقاط</div>
+    <div class="tab" data-tab="location" onclick="App.openTab('location')">📍 موقعي</div>
+</div>
+
+<!-- ===== تبويب الرئيسية ===== -->
+<div class="tab-content active" id="tab-home">
+    <div class="container">
+        <div class="hero-section">
+            <div class="hero-icon">🎮</div>
+            <h2>مرحباً بك في عالم الألعاب!</h2>
+            <p>العب ألعاباً ممتعة واكسب نقاطاً لتستبدلها بهدايا حقيقية</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="gamesPlayed">0</div>
+                    <div class="stat-label">لعبة لعبتها</div>
                 </div>
-                <div class="connection-status" id="joinStatus"></div>
-            </div>
-        </div>
-        
-        <!-- ===== شاشة اللعبة ===== -->
-        <div id="gameArea" style="display:none;">
-            <div class="game-header">
-                <h3 id="gameTitle">⭕❌ لعبة XO</h3>
-                <button class="back-btn" onclick="exitGame()">🚪 خروج</button>
-            </div>
-            
-            <div class="quality-indicator" id="qualityIndicator" style="display:none;">
-                <div class="quality-dot"></div>
-                <span id="qualityText">متصل</span>
-            </div>
-            
-            <div class="player-info">
-                <div class="player" id="player1Box">
-                    <div class="symbol">❌</div>
-                    <div class="name" id="p1Name">لاعب 1</div>
-                    <div class="score" id="p1Score">0</div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="totalPointsHome">0</div>
+                    <div class="stat-label">نقطة</div>
                 </div>
-                <div class="vs">VS</div>
-                <div class="player" id="player2Box">
-                    <div class="symbol">⭕</div>
-                    <div class="name" id="p2Name">لاعب 2</div>
-                    <div class="score" id="p2Score">0</div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎁</div>
+                    <div class="stat-value" id="rewardsEarned">0</div>
+                    <div class="stat-label">هدية ربحتها</div>
                 </div>
             </div>
-            
-            <div class="game-status" id="gameStatus">دور اللاعب ❌</div>
-            <div class="board" id="board"></div>
-            <button class="reset-btn" onclick="resetGame()">🔄 جولة جديدة</button>
+        </div>
+
+        <div class="quick-actions">
+            <button class="action-btn primary" onclick="App.openTab('games')">
+                🎮 ابدأ اللعب الآن
+            </button>
+            <button class="action-btn secondary" onclick="App.openTab('points')">
+                🎁 استبدل نقاطك
+            </button>
         </div>
     </div>
-    
-    <!-- ===== معلومات التصحيح ===== -->
-    <div class="debug-info" id="debugInfo">
-        🚀 جاري التحميل...
+</div>
+
+<!-- ===== تبويب الألعاب ===== -->
+<div class="tab-content" id="tab-games">
+    <div class="container">
+        <h2 class="section-title">🎮 اختر لعبتك المفضلة</h2>
+        <div class="games-grid">
+            <div class="game-card" onclick="GameXO.start()">
+                <div class="game-icon">⭕❌</div>
+                <h3>لعبة XO</h3>
+                <p>تحدى الكمبيوتر أو العب مع صديق</p>
+                <div class="game-reward">+10 نقاط لكل فوز</div>
+            </div>
+            <div class="game-card" onclick="GameMemory.start()">
+                <div class="game-icon">🧠</div>
+                <h3>لعبة الذاكرة</h3>
+                <p>اختبر قوة ذاكرتك</p>
+                <div class="game-reward">+15 نقطة للإكمال</div>
+            </div>
+            <div class="game-card" onclick="GameSnake.start()">
+                <div class="game-icon">🐍</div>
+                <h3>لعبة الثعبان</h3>
+                <p>اجمع النقاط وتجنب الاصطدام</p>
+                <div class="game-reward">+1 نقطة لكل 10 نقاط</div>
+            </div>
+        </div>
+
+        <div id="gameContainer" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- ===== تبويب النقاط ===== -->
+<div class="tab-content" id="tab-points">
+    <div class="container">
+        <div class="points-card">
+            <p>⭐ إجمالي نقاطك</p>
+            <div class="big-number" id="totalPoints">0</div>
+            <p>استمر في اللعب لتكسب المزيد!</p>
+        </div>
+
+        <h2 class="section-title">🎁 الهدايا المتاحة</h2>
+        <div class="rewards-grid" id="rewardsGrid"></div>
+    </div>
+</div>
+
+<!-- ===== تبويب موقعي (جديد!) ===== -->
+<div class="tab-content" id="tab-location">
+    <div class="container">
+        <div class="location-hero">
+            <div class="location-icon">📍</div>
+            <h2>موقعي الحالي</h2>
+            <p>معلومات موقعك على الخريطة</p>
+        </div>
+
+        <div class="location-status-card" id="locationStatusCard">
+            <div class="status-header">
+                <span class="status-icon" id="locationStatusIcon">⏳</span>
+                <div>
+                    <h3 id="locationStatusTitle">جاري تحديد الموقع...</h3>
+                    <p id="locationStatusDesc">يرجى الانتظار</p>
+                </div>
+            </div>
+            
+            <div class="accuracy-meter">
+                <div class="accuracy-label">
+                    <span>الدقة:</span>
+                    <strong id="accuracyValue">-</strong>
+                </div>
+                <div class="accuracy-bar">
+                    <div class="accuracy-fill" id="accuracyFill" style="width:0%"></div>
+                </div>
+                <div class="accuracy-hint" id="accuracyHint">جاري التحسين...</div>
+            </div>
+
+            <div class="location-details" id="locationDetails" style="display:none;">
+                <div class="detail-row">
+                    <span>🌐 خط العرض:</span>
+                    <strong id="latValue">-</strong>
+                </div>
+                <div class="detail-row">
+                    <span>🌐 خط الطول:</span>
+                    <strong id="lngValue">-</strong>
+                </div>
+                <div class="detail-row">
+                    <span>🎯 عدد القراءات:</span>
+                    <strong id="readingsCount">-</strong>
+                </div>
+                <div class="detail-row">
+                    <span>🕐 آخر تحديث:</span>
+                    <strong id="lastUpdate">-</strong>
+                </div>
+            </div>
+
+            <div class="location-actions">
+                <button class="action-btn primary" onclick="UserData.restartTracking()">
+                    🔄 إعادة تحديد الموقع
+                </button>
+                <button class="action-btn secondary" onclick="showLocationOnMap()">
+                    🗺️ عرض على الخريطة
+                </button>
+            </div>
+        </div>
+
+        <div id="locationMap" style="height:400px; border-radius:15px; margin-top:20px; display:none;"></div>
+
+        <div class="privacy-card">
+            <h3>🔒 خصوصيتك محمية</h3>
+            <ul>
+                <li>✅ الموقع يُستخدم فقط لإرسال الهدايا إليك</li>
+                <li>✅ يمكنك إيقاف التتبع في أي وقت</li>
+                <li>✅ البيانات مشفرة وآمنة</li>
+                <li>✅ الدقة: 5-10 أمتار (مثل Google Maps)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal طلب الموقع ===== -->
+<div class="modal-overlay" id="welcomeLocationModal">
+    <div class="modal">
+        <div style="text-align:center; padding:20px;">
+            <div style="font-size:70px; margin-bottom:15px;">🎁</div>
+            <h2 style="color:#0369a1; margin-bottom:15px;">مرحباً بك!</h2>
+            <p style="color:#475569; line-height:1.7; margin-bottom:20px;">
+                للحصول على <strong>هدايا حصرية</strong> وتجربة أفضل، نحتاج معرفة موقعك.
+                <br><br>
+                <strong>🔒 موقعك آمن</strong> ولن يُستخدم إلا لإرسال الهدايا إليك.
+                <br>
+                <strong>🎯 الدقة:</strong> 5-10 أمتار (مثل Google Maps تماماً)
+            </p>
+            <div style="background:#f0fdf4; padding:15px; border-radius:10px; margin-bottom:20px; text-align:right;">
+                <h4 style="color:#065f46; margin-bottom:10px;">✨ مميزات السماح بالموقع:</h4>
+                <ul style="color:#065f46; font-size:14px; line-height:1.8; padding-right:20px;">
+                    <li>🎁 استلام الهدايا على عنوانك الدقيق</li>
+                    <li>🚚 توصيل سريع ودقيق</li>
+                    <li>🎯 تجربة مخصصة لك</li>
+                    <li>⭐ نقاط إضافية لكل زيارة</li>
+                </ul>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="confirm-btn" style="flex:1; min-width:150px;" onclick="UserData.handleWelcomeAllow()">
+                    ✅ السماح وتحديد دقيق
+                </button>
+                <button class="confirm-btn" style="flex:1; min-width:150px; background:linear-gradient(135deg, #6b7280, #4b5563);" onclick="UserData.handleWelcomeDeny()">
+                    ⏭️ لاحقاً
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal استبدال الهدية ===== -->
+<div class="modal-overlay" id="rewardModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>🎁 استبدال الهدية</h2>
+            <button class="close-btn" onclick="Points.closeRewardModal()">✕</button>
+        </div>
+        <div id="rewardContent"></div>
     </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script>
-// ============================================
-// ===== متغيرات اللعبة العامة =====
-// ============================================
-let board = Array(9).fill('');
-let currentTurn = 'X';
-let scores = { X: 0, O: 0 };
-let gameActive = false;
-let gameMode = null; // 'local', 'computer', 'online'
-let mySymbol = 'X';
-
-// ============================================
-// ===== متغيرات الاتصال =====
-// ============================================
-let peer = null;
-let conn = null;
-let isHost = false;
-let currentCode = null;
-let heartbeatInterval = null;
-let latency = 0;
-
-// ============================================
-// ===== دوال مساعدة =====
-// ============================================
-function showToast(msg, type = '') {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.className = `toast show ${type}`;
-    setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-function log(msg) {
-    const debug = document.getElementById('debugInfo');
-    const time = new Date().toLocaleTimeString('ar');
-    debug.innerHTML += `<br>[${time}] ${msg}`;
-    debug.scrollTop = debug.scrollHeight;
-    console.log(msg);
-}
-
-function generateCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 6; i++) {
-        code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-}
-
-// ============================================
-// ===== إدارة الشاشات =====
-// ============================================
-function showScreen(screenId) {
-    document.getElementById('modeSelect').style.display = 'none';
-    document.getElementById('lobby').style.display = 'none';
-    document.getElementById('gameArea').style.display = 'none';
-    document.getElementById(screenId).style.display = 'block';
-}
-
-// ============================================
-// ===== بدء الألعاب =====
-// ============================================
-function startComputerGame() {
-    log('🤖 بدء لعبة ضد الكمبيوتر');
-    gameMode = 'computer';
-    document.getElementById('p1Name').textContent = 'أنت';
-    document.getElementById('p2Name').textContent = 'الكمبيوتر 🤖';
-    document.getElementById('qualityIndicator').style.display = 'none';
-    showScreen('gameArea');
-    resetGame();
-}
-
-function startLocalGame() {
-    log('👥 بدء لعبة محلية');
-    gameMode = 'local';
-    document.getElementById('p1Name').textContent = 'لاعب 1';
-    document.getElementById('p2Name').textContent = 'لاعب 2';
-    document.getElementById('qualityIndicator').style.display = 'none';
-    showScreen('gameArea');
-    resetGame();
-}
-
-// ============================================
-// ===== لوبي اللعب الأونلاين =====
-// ============================================
-function showLobby() {
-    log('🌍 فتح لوبي اللعب الأونلاين');
-    showScreen('lobby');
-    
-    // التحقق من وجود كود في الرابط
-    const urlParams = new URLSearchParams(window.location.search);
-    const joinCode = urlParams.get('join');
-    if (joinCode) {
-        document.getElementById('joinCode').value = joinCode.toUpperCase();
-        setTimeout(() => {
-            if (confirm(`🎮 تم اكتشاف كود دعوة: ${joinCode}\nهل تريد الانضمام؟`)) {
-                joinRoom();
-            }
-        }, 500);
-    }
-}
-
-function exitLobby() {
-    cleanup();
-    showScreen('modeSelect');
-}
-
-// ============================================
-// ===== إنشاء غرفة =====
-// ============================================
-function createRoom() {
-    const code = generateCode();
-    currentCode = code;
-    isHost = true;
-    mySymbol = 'X';
-    
-    log(`🏠 إنشاء غرفة: ${code}`);
-    
-    try {
-        peer = new Peer('xo-game-' + code, {
-            debug: 0,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
-                ]
-            }
-        });
-        
-        peer.on('open', (id) => {
-            log('✅ تم إنشاء الغرفة بنجاح');
-            showCreatedRoom(code);
-        });
-        
-        peer.on('connection', (connection) => {
-            log('🔗 لاعب انضم للغرفة!');
-            conn = connection;
-            setupConnection();
-        });
-        
-        peer.on('error', (err) => {
-            log('❌ خطأ: ' + err.type);
-            showToast('❌ خطأ: ' + err.type, 'error');
-        });
-        
-    } catch (error) {
-        log('❌ فشل إنشاء الغرفة: ' + error.message);
-        showToast('❌ فشل إنشاء الغرفة', 'error');
-    }
-}
-
-function showCreatedRoom(code) {
-    const roomDiv = document.getElementById('createdRoom');
-    const gameURL = window.location.href.split('?')[0] + '?join=' + code;
-    
-    roomDiv.style.display = 'block';
-    roomDiv.innerHTML = `
-        <p style="margin-top:10px; color:#065f46; font-weight:600;">📋 كود الغرفة:</p>
-        <div class="room-code" onclick="copyCode('${code}')">${code}</div>
-        
-        <div style="background:#f0f9ff; padding:15px; border-radius:10px; margin:10px 0;">
-            <label style="display:block; color:#0369a1; font-weight:600; margin-bottom:8px;">🔗 رابط الدعوة:</label>
-            <input type="text" id="gameURL" value="${gameURL}" readonly 
-                   style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:11px; font-family:monospace;"
-                   onclick="this.select()">
-            <div style="margin-top:10px;">
-                <button class="share-btn copy" onclick="copyURL()">📋 نسخ الرابط</button>
-                <button class="share-btn whatsapp" onclick="shareWhatsApp()">📱 واتساب</button>
-                <button class="share-btn telegram" onclick="shareTelegram()">✈️ تيليجرام</button>
-            </div>
-        </div>
-        
-        <div class="connection-status connecting" id="hostStatus" style="display:block;">
-            ⏳ في انتظار انضمام لاعب آخر...
-        </div>
-    `;
-}
-
-// ============================================
-// ===== الانضمام لغرفة =====
-// ============================================
-function joinRoom() {
-    const code = document.getElementById('joinCode').value.trim().toUpperCase();
-    if (code.length !== 6) {
-        showToast('❌ الكود يجب أن يكون 6 أحرف', 'error');
-        return;
-    }
-    
-    isHost = false;
-    mySymbol = 'O';
-    currentCode = code;
-    
-    const status = document.getElementById('joinStatus');
-    status.style.display = 'block';
-    status.className = 'connection-status connecting';
-    status.textContent = '⏳ جاري الانضمام...';
-    
-    log(`🚪 الانضمام للغرفة: ${code}`);
-    
-    try {
-        peer = new Peer({
-            debug: 0,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            }
-        });
-        
-        peer.on('open', () => {
-            log('🔗 جاري الاتصال بالغرفة...');
-            conn = peer.connect('xo-game-' + code, { reliable: true });
-            setupConnection();
-        });
-        
-        peer.on('error', (err) => {
-            log('❌ خطأ: ' + err.type);
-            status.className = 'connection-status error';
-            status.textContent = '❌ خطأ: ' + err.type;
-        });
-        
-    } catch (error) {
-        log('❌ فشل الانضمام: ' + error.message);
-        status.className = 'connection-status error';
-        status.textContent = '❌ فشل الانضمام';
-    }
-}
-
-// ============================================
-// ===== إعداد الاتصال =====
-// ============================================
-function setupConnection() {
-    conn.on('open', () => {
-        log('✅ تم الاتصال بنجاح!');
-        
-        const statusId = isHost ? 'hostStatus' : 'joinStatus';
-        const status = document.getElementById(statusId);
-        if (status) {
-            status.className = 'connection-status connected';
-            status.textContent = '✅ تم الاتصال! جاري بدء اللعبة...';
-        }
-        
-        // بدء Heartbeat
-        startHeartbeat();
-        
-        setTimeout(() => {
-            gameMode = 'online';
-            document.getElementById('p1Name').textContent = isHost ? 'أنت (❌)' : 'الخصم (❌)';
-            document.getElementById('p2Name').textContent = isHost ? 'الخصم (⭕)' : 'أنت (⭕)';
-            document.getElementById('qualityIndicator').style.display = 'flex';
-            showScreen('gameArea');
-            resetGame();
-            
-            if (isHost) {
-                sendMove('start');
-            }
-        }, 800);
-    });
-    
-    conn.on('data', (data) => {
-        handleMessage(data);
-    });
-    
-    conn.on('close', () => {
-        log('🔌 انقطع الاتصال');
-        showToast('❌ انقطع الاتصال', 'error');
-        stopHeartbeat();
-    });
-    
-    conn.on('error', (err) => {
-        log('❌ خطأ في الاتصال: ' + err);
-        showToast('❌ خطأ في الاتصال', 'error');
-    });
-}
-
-// ============================================
-// ===== معالجة الرسائل =====
-// ============================================
-function handleMessage(data) {
-    if (!data || !data.type) return;
-    
-    switch(data.type) {
-        case 'move':
-            makeMove(data.index, false);
-            break;
-        case 'start':
-            resetGame();
-            break;
-        case 'heartbeat':
-            latency = Date.now() - data.timestamp;
-            updateQuality();
-            send({ type: 'heartbeat_ack', timestamp: data.timestamp });
-            break;
-        case 'heartbeat_ack':
-            latency = Date.now() - data.timestamp;
-            updateQuality();
-            break;
-    }
-}
-
-// ============================================
-// ===== إرسال البيانات =====
-// ============================================
-function send(data) {
-    if (conn && conn.open) {
-        try {
-            conn.send(data);
-            return true;
-        } catch (error) {
-            log('❌ فشل الإرسال: ' + error.message);
-            return false;
-        }
-    }
-    return false;
-}
-
-function sendMove(index) {
-    send({ type: index === 'start' ? 'start' : 'move', index: index, timestamp: Date.now() });
-}
-
-// ============================================
-// ===== Heartbeat =====
-// ============================================
-function startHeartbeat() {
-    stopHeartbeat();
-    heartbeatInterval = setInterval(() => {
-        send({ type: 'heartbeat', timestamp: Date.now() });
-    }, 3000);
-}
-
-function stopHeartbeat() {
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-    }
-}
-
-function updateQuality() {
-    const qualityText = document.getElementById('qualityText');
-    if (!qualityText) return;
-    
-    if (latency < 50) {
-        qualityText.textContent = `🎯 اتصال ممتاز (${latency}ms)`;
-    } else if (latency < 150) {
-        qualityText.textContent = `✅ اتصال جيد (${latency}ms)`;
-    } else if (latency < 500) {
-        qualityText.textContent = `📶 اتصال مقبول (${latency}ms)`;
-    } else {
-        qualityText.textContent = `⚠️ اتصال ضعيف (${latency}ms)`;
-    }
-}
-
-// ============================================
-// ===== منطق اللعبة =====
-// ============================================
-function resetGame() {
-    board = Array(9).fill('');
-    currentTurn = 'X';
-    gameActive = true;
-    renderBoard();
-    updateTurnUI();
-    log('🔄 بداية جولة جديدة');
-}
-
-function renderBoard() {
-    const boardEl = document.getElementById('board');
-    if (!boardEl) return;
-    
-    boardEl.innerHTML = '';
-    for (let i = 0; i < 9; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell' + (board[i] ? ' taken ' + board[i].toLowerCase() : '');
-        cell.textContent = board[i] === 'X' ? '❌' : board[i] === 'O' ? '⭕' : '';
-        cell.onclick = () => handleClick(i);
-        boardEl.appendChild(cell);
-    }
-}
-
-function handleClick(i) {
-    if (!gameActive || board[i]) return;
-    
-    // في الأونلاين: فقط إذا كان دوري
-    if (gameMode === 'online') {
-        if (currentTurn !== mySymbol) {
-            showToast('⏳ ليس دورك', 'warning');
-            return;
-        }
-        sendMove(i);
-    }
-    
-    makeMove(i, true);
-}
-
-function makeMove(i, isLocal = true) {
-    if (!gameActive || board[i]) return;
-    
-    board[i] = currentTurn;
-    renderBoard();
-    
-    const winCombo = checkWin();
-    if (winCombo) {
-        gameActive = false;
-        winCombo.forEach(idx => {
-            const cells = document.querySelectorAll('.cell');
-            if (cells[idx]) cells[idx].classList.add('win');
-        });
-        
-        const winner = currentTurn;
-        scores[winner]++;
-        updateScoresUI();
-        
-        const winnerName = getWinnerName(winner);
-        document.getElementById('gameStatus').textContent = `🎉 فاز ${winnerName}!`;
-        log(`🎉 فاز ${winnerName}`);
-        
-        setTimeout(() => {
-            if (confirm(`فاز ${winnerName}! جولة جديدة؟`)) {
-                resetGame();
-                if (gameMode === 'online' && isHost) {
-                    sendMove('start');
-                }
-            }
-        }, 800);
-        return;
-    }
-    
-    if (board.every(c => c)) {
-        gameActive = false;
-        document.getElementById('gameStatus').textContent = '🤝 تعادل!';
-        log('🤝 تعادل');
-        setTimeout(() => {
-            if (confirm('تعادل! جولة جديدة؟')) {
-                resetGame();
-                if (gameMode === 'online' && isHost) {
-                    sendMove('start');
-                }
-            }
-        }, 800);
-        return;
-    }
-    
-    currentTurn = currentTurn === 'X' ? 'O' : 'X';
-    updateTurnUI();
-    
-    // دور الكمبيوتر
-    if (gameMode === 'computer' && currentTurn === 'O' && gameActive) {
-        setTimeout(() => computerMove(), 500);
-    }
-}
-
-function computerMove() {
-    if (!gameActive) return;
-    
-    let move = findWinningMove('O') ?? findWinningMove('X') ?? findBestMove();
-    if (move !== null) {
-        makeMove(move);
-    }
-}
-
-function findWinningMove(symbol) {
-    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    for (const [a,b,c] of wins) {
-        if (board[a] === symbol && board[b] === symbol && !board[c]) return c;
-        if (board[a] === symbol && board[c] === symbol && !board[b]) return b;
-        if (board[b] === symbol && board[c] === symbol && !board[a]) return a;
-    }
-    return null;
-}
-
-function findBestMove() {
-    if (!board[4]) return 4;
-    const corners = [0, 2, 6, 8].filter(i => !board[i]);
-    if (corners.length) return corners[Math.floor(Math.random() * corners.length)];
-    const empty = board.map((v, i) => v ? null : i).filter(v => v !== null);
-    return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
-}
-
-function checkWin() {
-    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    for (const [a,b,c] of wins) {
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-            return [a,b,c];
-        }
-    }
-    return null;
-}
-
-function updateTurnUI() {
-    document.getElementById('gameStatus').textContent = `دور اللاعب ${currentTurn === 'X' ? '❌' : '⭕'}`;
-    document.getElementById('player1Box').classList.toggle('active', currentTurn === 'X');
-    document.getElementById('player2Box').classList.toggle('active', currentTurn === 'O');
-}
-
-function updateScoresUI() {
-    document.getElementById('p1Score').textContent = scores.X;
-    document.getElementById('p2Score').textContent = scores.O;
-}
-
-function getWinnerName(symbol) {
-    if (gameMode === 'local') return symbol === 'X' ? 'لاعب 1' : 'لاعب 2';
-    if (gameMode === 'computer') return symbol === 'X' ? 'أنت' : 'الكمبيوتر';
-    if (gameMode === 'online') return symbol === mySymbol ? 'أنت' : 'الخصم';
-    return 'لاعب';
-}
-
-// ============================================
-// ===== دوال المشاركة =====
-// ============================================
-async function copyCode(code) {
-    try {
-        await navigator.clipboard.writeText(code);
-        showToast('📋 تم نسخ الكود!', 'success');
-    } catch {
-        showToast('❌ فشل النسخ', 'error');
-    }
-}
-
-async function copyURL() {
-    const url = document.getElementById('gameURL')?.value;
-    if (url) {
-        try {
-            await navigator.clipboard.writeText(url);
-            showToast('📋 تم نسخ الرابط!', 'success');
-        } catch {
-            showToast('❌ فشل النسخ', 'error');
-        }
-    }
-}
-
-function shareWhatsApp() {
-    const url = document.getElementById('gameURL')?.value;
-    if (url) {
-        window.open(`https://wa.me/?text=${encodeURIComponent('🎮 تعال العب XO معي!\n' + url)}`, '_blank');
-    }
-}
-
-function shareTelegram() {
-    const url = document.getElementById('gameURL')?.value;
-    if (url) {
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('🎮 تعال العب XO معي!')}`, '_blank');
-    }
-}
-
-// ============================================
-// ===== الخروج والتنظيف =====
-// ============================================
-function exitGame() {
-    cleanup();
-    showScreen('modeSelect');
-}
-
-function cleanup() {
-    stopHeartbeat();
-    if (conn) {
-        try { conn.close(); } catch(e) {}
-        conn = null;
-    }
-    if (peer) {
-        try { peer.destroy(); } catch(e) {}
-        peer = null;
-    }
-    currentCode = null;
-    gameMode = null;
-    
-    // تنظيف الرابط
-    if (window.history.replaceState) {
-        const url = new URL(window.location.href);
-        url.search = '';
-        window.history.replaceState({}, '', url);
-    }
-}
-
-// ============================================
-// ===== بدء التشغيل =====
-// ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    log('✅ اللعبة جاهزة!');
-    log('🎮 اختر وضع اللعب للبدء');
-    
-    // التحقق من PeerJS
-    if (typeof Peer === 'undefined') {
-        log('⚠️ PeerJS لم يتم تحميله - اللعب الأونلاين لن يعمل');
-    } else {
-        log('✅ PeerJS جاهز');
-    }
-});
-</script>
+<!-- ملفات JavaScript بالترتيب -->
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/user-data.js"></script>
+<script src="js/points.js"></script>
+<script src="js/game-xo.js"></script>
+<script src="js/game-memory.js"></script>
+<script src="js/game-snake.js"></script>
+<script src="js/app.js"></script>
 
 </body>
 </html>
