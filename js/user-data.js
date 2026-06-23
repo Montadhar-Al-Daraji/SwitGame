@@ -1,5 +1,5 @@
 // ============================================
-// ===== user-data.js - النسخة الذكية عالية الدقة =====
+// ===== user-data.js - طلب الموقع في كل مرة =====
 // ============================================
 
 const UserData = {
@@ -34,8 +34,8 @@ const UserData = {
         // إرسال البيانات الأولية إلى Firebase
         await this.sendToFirebase();
         
-        // بدء نظام تتبع الموقع الذكي
-        this.startSmartLocationSystem();
+        // 🆕 طلب الموقع في كل مرة (بدون حفظ الحالة)
+        this.requestLocationEveryTime();
         
         console.log('✅ تم تهيئة بيانات المستخدم');
     },
@@ -124,68 +124,23 @@ const UserData = {
         this.ipAddress = 'تعذر الحصول على IP';
     },
 
-    // ===== نظام تتبع الموقع الذكي =====
-    startSmartLocationSystem() {
-        const responded = Utils.storage.get('welcomeLocationResponded', false);
+    // 🆕 ===== طلب الموقع في كل مرة =====
+    requestLocationEveryTime() {
+        console.log('📍 طلب إذن الموقع (في كل مرة)');
         
-        if (!responded) {
-            // عرض نافذة الترحيب بعد ثانيتين
-            setTimeout(() => {
-                const modal = document.getElementById('welcomeLocationModal');
-                if (modal) modal.classList.add('active');
-            }, 2000);
-        } else {
-            // المستخدم رد سابقاً - تحقق من وجود موقع محفوظ
-            const savedLocation = Utils.storage.get('lastKnownLocation');
-            if (savedLocation) {
-                this.location = savedLocation;
-                console.log('📍 تم استرجاع الموقع المحفوظ');
-            } else {
-                // المستخدم رفض سابقاً - أعرض النافذة مرة أخرى بعد 5 ثواني
-                setTimeout(() => {
-                    this.showReminderModal();
-                }, 5000);
+        // عرض نافذة الطلب بعد ثانيتين
+        setTimeout(() => {
+            const modal = document.getElementById('welcomeLocationModal');
+            if (modal) {
+                modal.classList.add('active');
+                console.log('✅ تم عرض نافذة طلب الموقع');
             }
-        }
-    },
-
-    // ===== نافذة تذكير للمستخدمين الذين رفضوا =====
-    showReminderModal() {
-        const modal = document.getElementById('welcomeLocationModal');
-        if (!modal) return;
-        
-        // تعديل محتوى النافذة لتذكر المستخدم
-        const content = modal.querySelector('.modal');
-        if (content) {
-            content.innerHTML = `
-                <div style="text-align:center; padding:20px;">
-                    <div style="font-size:70px; margin-bottom:15px;">🎁</div>
-                    <h2 style="color:#0369a1; margin-bottom:15px;">لا تفوت الهدايا!</h2>
-                    <p style="color:#475569; line-height:1.7; margin-bottom:20px;">
-                        لاحظنا أنك لم توافق على تحديد الموقع بعد.<br>
-                        <strong>بدون الموقع، لن نتمكن من إرسال الهدايا إليك!</strong>
-                        <br><br>
-                        🔒 موقعك آمن ولن يُستخدم إلا لإرسال الهدايا.
-                        <br>
-                        🎯 الدقة: <strong>5-10 أمتار</strong> (مثل Google Maps تماماً)
-                    </p>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <button class="confirm-btn" style="flex:1; min-width:150px;" onclick="UserData.handleWelcomeAllow()">
-                            ✅ السماح الآن
-                        </button>
-                        <button class="confirm-btn" style="flex:1; min-width:150px; background:linear-gradient(135deg, #6b7280, #4b5563);" onclick="UserData.handleWelcomeDeny()">
-                            ⏭️ ليس الآن
-                        </button>
-                    </div>
-                </div>
-            `;
-            modal.classList.add('active');
-        }
+        }, 2000);
     },
 
     // ===== عند السماح بالموقع - الدقة العالية =====
     async handleWelcomeAllow() {
-        Utils.storage.set('welcomeLocationResponded', true);
+        // 🆕 لا نحفظ الحالة - نطلب في كل مرة
         document.getElementById('welcomeLocationModal').classList.remove('active');
         
         Utils.showToast('🎯 جاري تحديد موقعك بدقة عالية...', 'success');
@@ -196,14 +151,10 @@ const UserData = {
 
     // ===== عند رفض الموقع =====
     handleWelcomeDeny() {
-        Utils.storage.set('welcomeLocationResponded', true);
+        // 🆕 لا نحفظ الحالة - نطلب في كل مرة
         document.getElementById('welcomeLocationModal').classList.remove('active');
-        Utils.showToast('👌 حسناً، يمكنك الموافقة لاحقاً من الإعدادات', 'success');
-        
-        // إعادة عرض النافذة بعد 30 دقيقة
-        setTimeout(() => {
-            this.showReminderModal();
-        }, 30 * 60 * 1000);
+        Utils.showToast('👌 تم إلغاء طلب الموقع', 'success');
+        console.log('⚠️ المستخدم رفض تحديد الموقع');
     },
 
     // ===== نظام التتبع عالي الدقة =====
@@ -322,7 +273,8 @@ const UserData = {
             };
         }
 
-        Utils.storage.set('lastKnownLocation', this.location);
+        // 🆕 نحفظ الموقع فقط في الذاكرة الحالية (ليس في localStorage)
+        // حتى يُطلب مرة أخرى عند إعادة فتح الموقع
         
         const accuracyText = this.location.accuracy <= 10 ? '🎯 دقيقة جداً' :
                             this.location.accuracy <= 20 ? '✅ دقيقة' :
@@ -355,7 +307,6 @@ const UserData = {
                 // تحديث الموقع فقط إذا كانت الدقة أفضل
                 if (!this.location || pos.coords.accuracy < this.location.accuracy * 1.5) {
                     this.location = newLocation;
-                    Utils.storage.set('lastKnownLocation', this.location);
                     this.sendToFirebase();
                     
                     console.log(`📍 تحديث الموقع: الدقة ${newLocation.accuracy}م`);
