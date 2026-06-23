@@ -1,33 +1,33 @@
 // ============================================
-// ===== App - التطبيق الرئيسي لمنصة الألعاب =====
+// ===== App - التطبيق الرئيسي (النسخة الجديدة) =====
 // ============================================
 
 const App = {
     init() {
         console.log('🚀 جاري تشغيل منصة عالم الألعاب...');
         
-        // تهيئة الوحدات الأساسية
+        // تهيئة نظام النقاط
         try {
             Points.init();
             console.log('✅ تم تهيئة نظام النقاط');
         } catch (e) {
-            console.error('❌ خطأ في تهيئة Points:', e);
+            console.error('❌ خطأ في Points:', e);
         }
         
+        // تهيئة بيانات المستخدم
         try {
             UserData.init();
             console.log('✅ تم تهيئة بيانات المستخدم');
         } catch (e) {
-            console.error('❌ خطأ في تهيئة UserData:', e);
+            console.error('❌ خطأ في UserData:', e);
         }
         
-        // تحديث الإحصائيات في الصفحة الرئيسية
+        // تحديث الإحصائيات
         this.updateHomeStats();
         
         console.log('✅ التطبيق جاهز!');
     },
 
-    // التنقل بين التبويبات
     openTab(name) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -38,23 +38,14 @@ const App = {
         if (tab) tab.classList.add('active');
         if (content) content.classList.add('active');
         
-        // تحديث محتوى التبويب
-        if (name === 'points') {
-            Points.renderRewards();
-        }
-        
-        if (name === 'home') {
-            this.updateHomeStats();
-        }
-        
+        if (name === 'points') Points.renderRewards();
+        if (name === 'home') this.updateHomeStats();
         if (name === 'games') {
-            // إخفاء حاوية اللعبة عند فتح تبويب الألعاب
             const container = document.getElementById('gameContainer');
             if (container) container.style.display = 'none';
         }
     },
 
-    // تحديث الإحصائيات في الصفحة الرئيسية
     updateHomeStats() {
         const gamesPlayed = Utils.storage.get('gamesPlayed', 0);
         const rewardsEarned = Utils.storage.get('rewardsEarned', 0);
@@ -69,7 +60,6 @@ const App = {
     }
 };
 
-// ===== تشغيل التطبيق عند تحميل الصفحة =====
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
 });
