@@ -443,3 +443,258 @@
         font-size: 18px;
     }
 }
+/* ============================================
+   أنماط اللوبي والاتصال
+   ============================================ */
+
+.lobby-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.lobby-section {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #e5e7eb;
+}
+
+.lobby-section h4 {
+    color: #4c1d95;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.lobby-section p {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.lobby-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #9ca3af;
+    font-weight: bold;
+}
+
+.lobby-divider::before,
+.lobby-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.lobby-divider span {
+    padding: 0 15px;
+}
+
+/* ===== زر اللعب الأونلاين ===== */
+.mode-btn.online {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.mode-btn.online:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* ===== كود الغرفة ===== */
+.room-code {
+    background: #1f2937;
+    color: #10b981;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 5px;
+    font-family: 'Courier New', monospace;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid #10b981;
+}
+
+.room-code:hover {
+    background: #111827;
+    transform: scale(1.02);
+}
+
+/* ===== صندوق مشاركة الرابط ===== */
+.share-link-box {
+    background: #f0f9ff;
+    border: 2px solid #0ea5e9;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.share-link-box label {
+    display: block;
+    color: #0369a1;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.share-link-box input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: monospace;
+    background: white;
+    margin-bottom: 10px;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.share-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.share-btn.copy { background: #6b7280; color: white; }
+.share-btn.whatsapp { background: #25d366; color: white; }
+.share-btn.telegram { background: #0088cc; color: white; }
+
+/* ===== حالة الاتصال ===== */
+.connection-status {
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13px;
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.connection-status.connecting {
+    background: #fef3c7;
+    color: #92400e;
+    animation: pulse 1.5s infinite;
+}
+
+.connection-status.connected {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.connection-status.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ===== مؤشر جودة الاتصال ===== */
+.connection-quality-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #f0fdf4;
+    border: 2px solid #10b981;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    color: #065f46;
+    font-weight: 600;
+}
+
+.quality-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse 1.5s infinite;
+}
+
+/* ===== مجموعة الإدخال ===== */
+.input-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.input-group button {
+    padding: 12px 25px;
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.input-group button:hover {
+    background: #7c3aed;
+    transform: translateY(-2px);
+}
+
+/* ===== التجاوب ===== */
+@media (max-width: 600px) {
+    .mode-btn {
+        padding: 12px;
+        font-size: 13px;
+    }
+    
+    .room-code {
+        font-size: 22px;
+        letter-spacing: 3px;
+    }
+    
+    .share-buttons {
+        flex-direction: column;
+    }
+    
+    .share-btn {
+        width: 100%;
+    }
+    
+    .input-group {
+        flex-direction: column;
+    }
+    
+    .input-group button {
+        width: 100%;
+    }
+}
