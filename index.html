@@ -1,1 +1,469 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معلومات جهازي - Device Info</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+        }
 
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .header .icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 15px;
+        }
+
+        .ip-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ip-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; right: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .ip-card .label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .ip-card .ip-value {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+            position: relative;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .info-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border-color: #667eea;
+        }
+
+        .info-item .emoji {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .info-item .details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .info-item .info-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .info-item .info-value {
+            font-size: 15px;
+            color: #2d3748;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            display: block;
+            margin: 20px auto 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #2d3748;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: transform 0.3s;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #a0aec0;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 25px 20px; }
+            .header h1 { font-size: 22px; }
+            .ip-card .ip-value { font-size: 24px; }
+            .header .icon { font-size: 45px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🔍</div>
+            <h1>معلومات جهازي</h1>
+            <p>اكتشف نوع جهازك وعنوان IP الخاص بك</p>
+        </div>
+
+        <!-- بطاقة IP -->
+        <div class="ip-card">
+            <div class="label">🌍 عنوان IP الخاص بك</div>
+            <div class="ip-value" id="ipAddress">جاري التحميل...</div>
+            <button class="copy-btn" onclick="copyIP()">📋 نسخ العنوان</button>
+        </div>
+
+        <!-- شبكة المعلومات -->
+        <div class="info-grid" id="infoGrid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px;">جاري جمع معلومات الجهاز...</p>
+            </div>
+        </div>
+
+        <button class="refresh-btn" onclick="location.reload()">🔄 تحديث المعلومات</button>
+
+        <div class="footer">
+            <p>💡 المعلومات تُجمع محلياً من متصفحك فقط</p>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">✅ تم النسخ بنجاح!</div>
+
+    <script>
+        // ========== جلب عنوان IP ==========
+        async function fetchIP() {
+            const ipElement = document.getElementById('ipAddress');
+            try {
+                // استخدام عدة خدمات كاحتياط
+                const services = [
+                    'https://api.ipify.org?format=json',
+                    'https://api.my-ip.io/v2/ip.json'
+                ];
+                
+                for (const url of services) {
+                    try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        ipElement.textContent = data.ip;
+                        return;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                ipElement.textContent = 'تعذر الحصول على IP';
+            } catch (error) {
+                ipElement.textContent = 'خطأ في الاتصال';
+            }
+        }
+
+        // ========== تحديد نوع الجهاز والمتصفح ==========
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            const info = {};
+
+            // --- نظام التشغيل ---
+            if (/Windows NT 10/.test(ua)) info.os = 'Windows 10/11';
+            else if (/Windows NT 6.3/.test(ua)) info.os = 'Windows 8.1';
+            else if (/Windows NT 6.2/.test(ua)) info.os = 'Windows 8';
+            else if (/Windows NT 6.1/.test(ua)) info.os = 'Windows 7';
+            else if (/Windows/.test(ua)) info.os = 'Windows';
+            else if (/Mac OS X/.test(ua)) info.os = 'macOS ' + ua.match(/Mac OS X ([\d_]+)/)?.[1]?.replace(/_/g, '.') || '';
+            else if (/Android/.test(ua)) info.os = 'Android ' + (ua.match(/Android ([\d.]+)/)?.[1] || '');
+            else if (/iPhone|iPad|iPod/.test(ua)) {
+                const ver = ua.match(/OS ([\d_]+)/)?.[1]?.replace(/_/g, '.');
+                info.os = /iPad/.test(ua) ? `iPadOS ${ver}` : `iOS ${ver}`;
+            }
+            else if (/Linux/.test(ua)) info.os = 'Linux';
+            else if (/CrOS/.test(ua)) info.os = 'Chrome OS';
+            else info.os = 'غير معروف';
+
+            // --- نوع الجهاز ---
+            const isMobile = /Mobile|Android|iPhone|iPod/.test(ua);
+            const isTablet = /iPad|Android(?!.*Mobile)|Tablet/.test(ua);
+            if (isTablet) info.deviceType = '📱 جهاز لوحي (Tablet)';
+            else if (isMobile) info.deviceType = '📱 هاتف محمول';
+            else info.deviceType = '💻 جهاز كمبيوتر';
+
+            // --- المتصفح ---
+            if (/Edg\//.test(ua)) info.browser = 'Microsoft Edge';
+            else if (/OPR\/|Opera/.test(ua)) info.browser = 'Opera';
+            else if (/Brave/.test(ua) || navigator.brave) info.browser = 'Brave';
+            else if (/Vivaldi/.test(ua)) info.browser = 'Vivaldi';
+            else if (/Chrome/.test(ua) && !/Chromium/.test(ua)) info.browser = 'Google Chrome';
+            else if (/Safari/.test(ua) && !/Chrome/.test(ua)) info.browser = 'Safari';
+            else if (/Firefox/.test(ua)) info.browser = 'Mozilla Firefox';
+            else info.browser = 'متصفح آخر';
+
+            // --- إصدار المتصفح ---
+            const versionMatch = ua.match(/(Edg|OPR|Chrome|Version|Firefox)\/([\d.]+)/);
+            info.browserVersion = versionMatch ? versionMatch[2] : 'غير معروف';
+
+            // --- اللغة ---
+            info.language = navigator.language || 'غير معروف';
+
+            // --- المنصة ---
+            info.platform = navigator.platform || 'غير معروف';
+
+            // --- النوافذ ---
+            info.screenSize = `${screen.width} × ${screen.height}`;
+            info.windowSize = `${window.innerWidth} × ${window.innerHeight}`;
+
+            // --- وحدة المعالجة المركزية ---
+            info.cores = navigator.hardwareConcurrency || 'غير معروف';
+
+            // --- الذاكرة ---
+            info.ram = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'غير متاح';
+
+            // --- الاتصال بالإنترنت ---
+            info.online = navigator.onLine ? '✅ متصل' : '❌ غير متصل';
+            if (navigator.connection) {
+                info.connectionType = navigator.connection.effectiveType || 'غير معروف';
+            }
+
+            // --- اللمس ---
+            info.touchSupport = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 
+                ? '✅ مدعوم' : '❌ غير مدعوم';
+
+            // --- cookies ---
+            info.cookies = navigator.cookieEnabled ? '✅ مفعّلة' : '❌ معطّلة';
+
+            // --- المنطقة الزمنية ---
+            info.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            return info;
+        }
+
+        // ========== عرض المعلومات ==========
+        function displayInfo() {
+            const info = getDeviceInfo();
+            const grid = document.getElementById('infoGrid');
+
+            const items = [
+                { emoji: '💻', label: 'نوع الجهاز', value: info.deviceType },
+                { emoji: '⚙️', label: 'نظام التشغيل', value: info.os },
+                { emoji: '🌐', label: 'المتصفح', value: info.browser },
+                { emoji: '🔢', label: 'إصدار المتصفح', value: info.browserVersion },
+                { emoji: '🗣️', label: 'اللغة', value: info.language },
+                { emoji: '🖥️', label: 'المنصة', value: info.platform },
+                { emoji: '📐', label: 'دقة الشاشة', value: info.screenSize },
+                { emoji: '🪟', label: 'حجم النافذة', value: info.windowSize },
+                { emoji: '🧠', label: 'أنوية المعالج', value: info.cores },
+                { emoji: '💾', label: 'الذاكرة (RAM)', value: info.ram },
+                { emoji: '📡', label: 'حالة الاتصال', value: info.online },
+                { emoji: '📶', label: 'نوع الاتصال', value: info.connectionType || 'غير متاح' },
+                { emoji: '👆', label: 'دعم اللمس', value: info.touchSupport },
+                { emoji: '🍪', label: 'ملفات الكوكيز', value: info.cookies },
+                { emoji: '🕐', label: 'المنطقة الزمنية', value: info.timezone }
+            ];
+
+            grid.innerHTML = items.map(item => `
+                <div class="info-item">
+                    <div class="emoji">${item.emoji}</div>
+                    <div class="details">
+                        <div class="info-label">${item.label}</div>
+                        <div class="info-value">${item.value}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========== نسخ IP ==========
+        function copyIP() {
+            const ip = document.getElementById('ipAddress').textContent;
+            if (!ip || ip.includes('جاري') || ip.includes('خطأ')) {
+                showToast('⚠️ لا يوجد IP للنسخ');
+                return;
+            }
+            navigator.clipboard.writeText(ip).then(() => {
+                showToast('✅ تم نسخ IP بنجاح!');
+            }).catch(() => {
+                // fallback
+                const temp = document.createElement('textarea');
+                temp.value = ip;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand('copy');
+                document.body.removeChild(temp);
+                showToast('✅ تم النسخ!');
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ========== التشغيل ==========
+        fetchIP();
+        displayInfo();
+
+        // تحديث حجم النافذة ديناميكياً
+        window.addEventListener('resize', () => {
+            const windowItem = document.querySelectorAll('.info-value')[7];
+            if (windowItem) windowItem.textContent = `${window.innerWidth} × ${window.innerHeight}`;
+        });
+    </script>
+</body>
+</html>
