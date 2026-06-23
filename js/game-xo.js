@@ -1,5 +1,5 @@
 // ============================================
-// ===== game-xo.js - لعبة XO مع دعم الأونلاين (المُصلحة) =====
+// ===== game-xo.js - النسخة النهائية المُصلحة =====
 // ============================================
 
 const GameXO = {
@@ -7,7 +7,7 @@ const GameXO = {
     currentTurn: 'X',
     scores: { X: 0, O: 0 },
     gameActive: false,
-    mode: null, // 'local', 'computer', 'online'
+    mode: null,
     vsComputer: false,
 
     // ===== بدء اللعبة - اختيار الوضع =====
@@ -56,7 +56,7 @@ const GameXO = {
         this.reset();
     },
 
-    // ===== 🆕 بدء اللعب الأونلاين (يُستدعى من PeerGame بعد الاتصال) =====
+    // ===== 🆕 بدء اللعب الأونلاين (الحل الصحيح) =====
     startOnlineGame(isHost) {
         console.log('🎮 بدء اللعبة الأونلاين - المضيف:', isHost);
         
@@ -66,12 +66,45 @@ const GameXO = {
         const p1Name = isHost ? 'أنت (❌)' : 'الخصم (❌)';
         const p2Name = isHost ? 'الخصم (⭕)' : 'أنت (⭕)';
         
-        // 🆕 استبدال كامل لمحتوى منطقة اللعبة
-        this.showGameArea(p1Name, p2Name);
+        // 🆕 الحل: استبدال محتوى gameContainer بالكامل
+        // لأن اللوبي قد يكون استبدل المحتوى الأصلي
+        const container = document.getElementById('gameContainer');
+        if (!container) {
+            console.error('❌ gameContainer غير موجود!');
+            return;
+        }
         
-        // إظهار مؤشر جودة الاتصال
-        const qualityEl = document.getElementById('connectionQuality');
-        if (qualityEl) qualityEl.style.display = 'flex';
+        container.innerHTML = `
+            <div class="game-wrapper">
+                <div class="game-header">
+                    <h3 style="color:#4c1d95;">⭕❌ لعبة XO - أونلاين</h3>
+                    <button class="back-btn" onclick="GameXO.exit()">🚪 خروج</button>
+                </div>
+                
+                <div class="connection-quality-indicator" id="connectionQuality">
+                    <div class="quality-dot"></div>
+                    <span id="qualityText">متصل</span>
+                </div>
+                
+                <div class="player-info">
+                    <div class="player" id="player1Box">
+                        <div class="symbol">❌</div>
+                        <div class="name" id="p1Name">${p1Name}</div>
+                        <div class="score" id="p1Score">${this.scores.X}</div>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="player" id="player2Box">
+                        <div class="symbol">⭕</div>
+                        <div class="name" id="p2Name">${p2Name}</div>
+                        <div class="score" id="p2Score">${this.scores.O}</div>
+                    </div>
+                </div>
+
+                <div class="game-status" id="xoStatus">دور اللاعب ❌</div>
+                <div class="board" id="xoBoard"></div>
+                <button class="reset-btn" onclick="GameXO.reset()">🔄 جولة جديدة</button>
+            </div>
+        `;
         
         // بدء اللعبة
         this.reset();
@@ -79,18 +112,20 @@ const GameXO = {
         console.log('✅ تم بدء اللعبة الأونلاين بنجاح');
     },
 
-    // ===== 🆕 دالة مساعدة لعرض منطقة اللعبة =====
+    // ===== دالة مساعدة لعرض منطقة اللعبة (للعب المحلي والكمبيوتر) =====
     showGameArea(p1Name, p2Name) {
         const gameArea = document.getElementById('xoGameArea');
-        if (!gameArea) return;
+        const modeSelect = document.getElementById('xoModeSelect');
+        
+        if (modeSelect) modeSelect.style.display = 'none';
+        
+        if (!gameArea) {
+            console.error('❌ xoGameArea غير موجود!');
+            return;
+        }
         
         gameArea.style.display = 'block';
         gameArea.innerHTML = `
-            <div class="connection-quality-indicator" id="connectionQuality" style="display:none;">
-                <div class="quality-dot"></div>
-                <span id="qualityText">متصل</span>
-            </div>
-            
             <div class="player-info">
                 <div class="player" id="player1Box">
                     <div class="symbol">❌</div>
@@ -109,10 +144,6 @@ const GameXO = {
             <div class="board" id="xoBoard"></div>
             <button class="reset-btn" onclick="GameXO.reset()">🔄 جولة جديدة</button>
         `;
-        
-        // إخفاء قائمة الأوضاع إذا كانت موجودة
-        const modeSelect = document.getElementById('xoModeSelect');
-        if (modeSelect) modeSelect.style.display = 'none';
     },
 
     // ===== الخروج =====
@@ -124,6 +155,7 @@ const GameXO = {
         }
         this.gameActive = false;
         this.mode = null;
+        this.scores = { X: 0, O: 0 };
         
         if (typeof PeerGame !== 'undefined') {
             PeerGame.cleanup();
@@ -144,7 +176,7 @@ const GameXO = {
     renderBoard() {
         const el = document.getElementById('xoBoard');
         if (!el) {
-            console.error('❌ عنصر xoBoard غير موجود!');
+            console.warn('⚠️ xoBoard غير موجود بعد');
             return;
         }
         el.innerHTML = '';
@@ -161,13 +193,11 @@ const GameXO = {
     handleClick(i) {
         if (!this.gameActive || this.board[i]) return;
         
-        // في وضع الأونلاين: فقط إذا كان دوري
         if (this.mode === 'online') {
             if (this.currentTurn !== PeerGame.mySymbol) {
                 Utils.showToast('⏳ ليس دورك الآن', 'warning');
                 return;
             }
-            // إرسال الحركة للطرف الآخر
             PeerGame.sendMove(i);
         }
         
@@ -197,7 +227,6 @@ const GameXO = {
             const status = document.getElementById('xoStatus');
             if (status) status.textContent = `🎉 فاز ${name}!`;
             
-            // منح النقاط
             if (this.mode === 'local') {
                 Points.add(10, 'فوز في XO');
             } else if (this.mode === 'online' && winner === PeerGame.mySymbol) {
@@ -236,23 +265,15 @@ const GameXO = {
         this.currentTurn = this.currentTurn === 'X' ? 'O' : 'X';
         this.updateTurnUI();
         
-        // دور الكمبيوتر
         if (this.mode === 'computer' && this.currentTurn === 'O' && this.gameActive) {
             setTimeout(() => this.computerMove(), 500);
         }
     },
 
-    // ===== حركة الكمبيوتر =====
     computerMove() {
         if (!this.gameActive) return;
-        
-        let move = this.findWinningMove('O') ?? 
-                   this.findWinningMove('X') ?? 
-                   this.findBestMove();
-        
-        if (move !== null) {
-            this.makeMove(move);
-        }
+        let move = this.findWinningMove('O') ?? this.findWinningMove('X') ?? this.findBestMove();
+        if (move !== null) this.makeMove(move);
     },
 
     findWinningMove(symbol) {
@@ -273,7 +294,6 @@ const GameXO = {
         return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
     },
 
-    // ===== التحقق من الفوز =====
     checkWin() {
         const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         for (const combo of wins) {
@@ -285,7 +305,6 @@ const GameXO = {
         return null;
     },
 
-    // ===== تحديث واجهة الدور =====
     updateTurnUI() {
         const s = document.getElementById('xoStatus');
         if (s) s.textContent = `دور اللاعب ${this.currentTurn === 'X' ? '❌' : '⭕'}`;
@@ -296,7 +315,6 @@ const GameXO = {
         if (p2) p2.classList.toggle('active', this.currentTurn === 'O');
     },
 
-    // ===== تحديث النتائج =====
     updateScoresUI() {
         const s1 = document.getElementById('p1Score');
         const s2 = document.getElementById('p2Score');
@@ -304,7 +322,6 @@ const GameXO = {
         if (s2) s2.textContent = this.scores.O;
     },
 
-    // ===== اسم الفائز =====
     getWinnerName(symbol) {
         if (this.mode === 'local') return symbol === 'X' ? 'لاعب 1' : 'لاعب 2';
         if (this.mode === 'computer') return symbol === 'X' ? 'أنت' : 'الكمبيوتر';
