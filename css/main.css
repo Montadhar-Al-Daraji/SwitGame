@@ -1,1 +1,162 @@
+/* ===== General ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+body { background: #fef5e7; color: #2d3748; min-height: 100vh; padding-bottom: 30px; }
 
+/* ===== Header ===== */
+header {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    color: white; padding: 20px; text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100;
+}
+header h1 { font-size: 26px; margin-bottom: 5px; }
+header p { font-size: 13px; opacity: 0.9; }
+.header-actions { position: absolute; top: 15px; left: 15px; display: flex; gap: 10px; }
+.icon-btn {
+    background: white; color: #d97706; width: 45px; height: 45px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    position: relative; transition: transform 0.3s; border: none;
+}
+.icon-btn:hover { transform: scale(1.1); }
+.badge {
+    position: absolute; top: -5px; right: -5px; background: #dc2626; color: white;
+    min-width: 22px; height: 22px; border-radius: 11px; font-size: 11px;
+    display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 0 5px;
+}
+.points-badge { background: #10b981 !important; }
+
+/* ===== Tabs ===== */
+.tabs {
+    display: flex; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    position: sticky; top: 85px; z-index: 99; overflow-x: auto;
+}
+.tab {
+    flex: 1; padding: 15px 8px; text-align: center; cursor: pointer;
+    font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent;
+    transition: all 0.3s; font-size: 14px; white-space: nowrap; min-width: 80px;
+}
+.tab.active { color: #d97706; border-color: #d97706; background: #fef5e7; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ===== Container ===== */
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.section-title {
+    font-size: 22px; color: #92400e; margin: 20px 0 15px;
+    padding-right: 15px; border-right: 5px solid #d97706;
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); display: none; align-items: center;
+    justify-content: center; z-index: 1000; padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: white; border-radius: 20px; max-width: 600px; width: 100%;
+    max-height: 90vh; overflow-y: auto; padding: 25px; animation: slideUp 0.3s;
+}
+@keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f3f4f6;
+}
+.modal-header h2 { color: #92400e; font-size: 22px; }
+.close-btn {
+    background: #f3f4f6; border: none; width: 35px; height: 35px;
+    border-radius: 50%; cursor: pointer; font-size: 18px;
+}
+
+/* ===== Toast ===== */
+.toast {
+    position: fixed; top: 100px; left: 50%; transform: translateX(-50%) translateY(-100px);
+    background: #1f2937; color: white; padding: 12px 25px; border-radius: 25px;
+    font-size: 14px; transition: transform 0.3s; z-index: 2000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-width: 90%;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: #10b981; }
+.toast.error { background: #ef4444; }
+
+/* ===== Privacy Notice ===== */
+.privacy-notice {
+    background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px;
+    padding: 15px; margin-bottom: 20px;
+}
+.privacy-notice h4 { color: #0369a1; margin-bottom: 8px; font-size: 15px; }
+.privacy-notice p { color: #0c4a6e; font-size: 13px; line-height: 1.6; }
+.privacy-notice ul { margin-top: 8px; padding-right: 20px; }
+.privacy-notice li { color: #0c4a6e; font-size: 13px; margin-bottom: 3px; }
+
+/* ===== Device Info Section ===== */
+.device-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; padding: 30px; border-radius: 20px; margin-bottom: 25px;
+    text-align: center; position: relative; overflow: hidden;
+}
+.device-hero::before {
+    content: ''; position: absolute; top: -50%; right: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: rotate 15s linear infinite;
+}
+@keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.device-hero .icon { font-size: 60px; margin-bottom: 10px; position: relative; }
+.device-hero h2 { font-size: 26px; margin-bottom: 10px; position: relative; }
+.device-hero p { opacity: 0.95; line-height: 1.6; position: relative; }
+.bonus-badge {
+    display: inline-block; background: #10b981; color: white;
+    padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold;
+    margin-top: 12px; position: relative;
+}
+
+.ip-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px; padding: 25px; margin-bottom: 25px;
+    color: white; text-align: center; position: relative; overflow: hidden;
+}
+.ip-card .label { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
+.ip-card .ip-value {
+    font-size: 32px; font-weight: bold; letter-spacing: 2px;
+    margin-bottom: 12px; word-break: break-all;
+}
+.copy-btn {
+    background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);
+    color: white; padding: 8px 20px; border-radius: 25px; cursor: pointer;
+    font-size: 14px; transition: all 0.3s;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.3); }
+
+.info-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px; margin-bottom: 20px;
+}
+.info-item {
+    background: white; border: 2px solid #e2e8f0; border-radius: 12px;
+    padding: 18px; transition: all 0.3s; display: flex; align-items: center; gap: 15px;
+}
+.info-item:hover { transform: translateY(-3px); border-color: #667eea; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+.info-item .emoji { font-size: 32px; flex-shrink: 0; }
+.info-item .details { flex: 1; min-width: 0; }
+.info-item .info-label { font-size: 12px; color: #718096; margin-bottom: 4px; font-weight: 600; }
+.info-item .info-value { font-size: 15px; color: #2d3748; font-weight: 600; word-break: break-word; }
+
+.refresh-btn {
+    display: block; margin: 20px auto 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border: none; padding: 12px 30px; border-radius: 25px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 600px) {
+    header h1 { font-size: 20px; }
+    .header-actions { top: 10px; left: 10px; gap: 5px; }
+    .icon-btn { width: 38px; height: 38px; font-size: 17px; }
+    .tabs { top: 70px; }
+    .tab { padding: 12px 5px; font-size: 12px; }
+    .ip-card .ip-value { font-size: 22px; }
+}
