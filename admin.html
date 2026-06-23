@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المدير</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+        body { background: #f3f4f6; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #1f2937; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .stat-card .label { color: #6b7280; font-size: 14px; margin-bottom: 5px; }
+        .stat-card .value { color: #1f2937; font-size: 32px; font-weight: bold; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .tab.active { background: #3b82f6; color: white; }
+        .content { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge.success { background: #d1fae5; color: #065f46; }
+        .badge.warning { background: #fef3c7; color: #92400e; }
+        .badge.error { background: #fee2e2; color: #991b1b; }
+        #map { height: 500px; border-radius: 12px; margin-top: 20px; }
+        .action-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .action-btn.view { background: #3b82f6; color: white; }
+        .action-btn.approve { background: #10b981; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎛️ لوحة تحكم المدير</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">إجمالي المستخدمين</div>
+                <div class="value" id="totalUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">المستخدمون النشطون</div>
+                <div class="value" id="activeUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">طلبات الهدايا</div>
+                <div class="value" id="totalOrders">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">الطلبات المعلقة</div>
+                <div class="value" id="pendingOrders">0</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('users')">👥 المستخدمون</button>
+            <button class="tab" onclick="showTab('orders')">🎁 طلبات الهدايا</button>
+            <button class="tab" onclick="showTab('map')">🗺️ الخريطة</button>
+        </div>
+
+        <div class="content" id="usersTab">
+            <h2>👥 المستخدمون</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>المعرف</th>
+                        <th>الجهاز</th>
+                        <th>المتصفح</th>
+                        <th>IP</th>
+                        <th>الموقع</th>
+                        <th>النقاط</th>
+                        <th>آخر زيارة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable"></tbody>
+            </table>
+        </div>
+
+        <div class="content" id="ordersTab" style="display:none;">
+            <h2>🎁 طلبات الهدايا</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>المعرف</th>
+                        <th>الهدية</th>
+                        <th>الاسم</th>
+                        <th>الهاتف</th>
