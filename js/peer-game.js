@@ -1,5 +1,5 @@
 // ============================================
-// ===== peer-game.js - نظام اللعب الأونلاين الذكي =====
+// ===== peer-game.js - نظام الاتصال الذكي المُحسّن =====
 // ============================================
 
 const PeerGame = {
@@ -15,6 +15,7 @@ const PeerGame = {
     reconnectDelay: 2000,
     heartbeatInterval: null,
     latency: 0,
+    isConnected: false,
     
     // ===== عرض اللوبي =====
     showLobby() {
@@ -72,7 +73,8 @@ const PeerGame = {
     // ===== الخروج من اللوبي =====
     exitLobby() {
         this.cleanup();
-        GameXO.exit();
+        const container = document.getElementById('gameContainer');
+        if (container) container.style.display = 'none';
     },
     
     // ===== استخراج الكود من الرابط =====
@@ -96,8 +98,10 @@ const PeerGame = {
         this.currentCode = code;
         this.isHost = true;
         this.mySymbol = 'X';
+        this.isConnected = false;
         
         this.showConnectionStatus('hostStatus', 'connecting', '⏳ جاري إنشاء الغرفة...');
+        console.log('🏠 جاري إنشاء الغرفة:', code);
         
         try {
             this.peer = new Peer('xo-game-' + code, {
@@ -114,12 +118,12 @@ const PeerGame = {
             });
             
             this.peer.on('open', (id) => {
-                console.log('✅ تم إنشاء الغرفة:', id);
+                console.log('✅ تم إنشاء الغرفة بنجاح:', id);
                 this.showRoomCreated(code);
             });
             
             this.peer.on('connection', (connection) => {
-                console.log('🔗 لاعب انضم للغرفة');
+                console.log('🔗 لاعب انضم للغرفة!');
                 this.conn = connection;
                 this.setupConnection();
             });
@@ -184,8 +188,10 @@ const PeerGame = {
         this.isHost = false;
         this.mySymbol = 'O';
         this.currentCode = code;
+        this.isConnected = false;
         
         this.showConnectionStatus('joinStatus', 'connecting', '⏳ جاري الانضمام...');
+        console.log('🚪 جاري الانضمام للغرفة:', code);
         
         try {
             this.peer = new Peer({
@@ -200,7 +206,7 @@ const PeerGame = {
             });
             
             this.peer.on('open', () => {
-                console.log('🔗 جاري الاتصال بالغرفة:', code);
+                console.log('🔗 جاري الاتصال بالغرفة...');
                 this.conn = this.peer.connect('xo-game-' + code, { 
                     reliable: true,
                     serialization: 'json'
@@ -230,8 +236,13 @@ const PeerGame = {
         
         this.conn.on('open', () => {
             console.log('✅ تم الاتصال بنجاح!');
+            this.isConnected = true;
             this.reconnectAttempts = 0;
+            
             this.showConnectionStatus(statusId, 'connected', '✅ تم الاتصال! جاري بدء اللعبة...');
+            Utils.showToast('✅ تم الاتصال بنجاح!', 'success');
+            
+            // بدء Heartbeat
             this.startHeartbeat();
             
             // إرسال رسالة ترحيب
@@ -241,19 +252,29 @@ const PeerGame = {
                 timestamp: Date.now()
             });
             
+            // 🆕 بدء اللعبة بعد تأخير قصير
             setTimeout(() => {
+                console.log('🎮 بدء اللعبة الأونلاين...');
                 GameXO.startOnlineGame(this.isHost);
+                
                 if (this.isHost) {
+                    console.log('🎯 المضيف يبدأ اللعبة');
                     GameXO.reset();
                     this.send({ type: 'gameStart' });
+                } else {
+                    console.log('⏳ اللاعب ينتظر بدء اللعبة من المضيف...');
                 }
-            }, 800);
+            }, 1000);
         });
         
-        this.conn.on('data', (data) => this.handleMessage(data));
+        this.conn.on('data', (data) => {
+            console.log('📨 استلام رسالة:', data);
+            this.handleMessage(data);
+        });
         
         this.conn.on('close', () => {
             console.warn('🔌 انقطع الاتصال');
+            this.isConnected = false;
             this.stopHeartbeat();
             Utils.showToast('❌ انقطع الاتصال بالخصم', 'error');
             this.attemptReconnect();
@@ -261,6 +282,7 @@ const PeerGame = {
         
         this.conn.on('error', (err) => {
             console.error('❌ خطأ في الاتصال:', err);
+            this.isConnected = false;
             this.showConnectionStatus(statusId, 'error', '❌ خطأ في الاتصال');
         });
     },
@@ -292,11 +314,13 @@ const PeerGame = {
                 break;
                 
             case 'move':
+                console.log('🎯 استلام حركة:', data.index);
                 GameXO.makeMove(data.index);
                 break;
                 
             case 'gameStart':
             case 'restart':
+                console.log('🔄 بدء/إعادة اللعبة');
                 GameXO.reset();
                 break;
         }
@@ -318,6 +342,7 @@ const PeerGame = {
     
     // ===== إرسال حركة =====
     sendMove(index) {
+        console.log('📤 إرسال حركة:', index);
         this.send({ 
             type: 'move', 
             index: index,
@@ -458,6 +483,7 @@ const PeerGame = {
     // ===== التنظيف =====
     cleanup() {
         this.stopHeartbeat();
+        this.isConnected = false;
         
         if (this.conn) {
             try { this.conn.close(); } catch(e) {}
