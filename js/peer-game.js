@@ -1,5 +1,5 @@
 // ============================================
-// ===== peer-game.js - نظام الاتصال الذكي المُحسّن =====
+// ===== peer-game.js - نظام الاتصال الذكي (المُصلح) =====
 // ============================================
 
 const PeerGame = {
@@ -9,7 +9,6 @@ const PeerGame = {
     mySymbol: 'X',
     currentCode: null,
     
-    // إعدادات الاتصال الذكي
     reconnectAttempts: 0,
     maxReconnectAttempts: 5,
     reconnectDelay: 2000,
@@ -70,20 +69,20 @@ const PeerGame = {
         }
     },
     
-    // ===== الخروج من اللوبي =====
     exitLobby() {
         this.cleanup();
         const container = document.getElementById('gameContainer');
-        if (container) container.style.display = 'none';
+        if (container) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+        }
     },
     
-    // ===== استخراج الكود من الرابط =====
     getCodeFromURL() {
         const params = new URLSearchParams(window.location.search);
         return params.get('join')?.toUpperCase();
     },
     
-    // ===== توليد رابط اللعبة =====
     generateGameURL(code) {
         const url = new URL(window.location.href);
         url.search = '';
@@ -144,7 +143,6 @@ const PeerGame = {
         }
     },
     
-    // ===== عرض الغرفة المُنشأة =====
     showRoomCreated(code) {
         const roomDiv = document.getElementById('createdRoom');
         if (!roomDiv) return;
@@ -230,7 +228,7 @@ const PeerGame = {
         }
     },
     
-    // ===== إعداد الاتصال =====
+    // ===== 🆕 إعداد الاتصال - مُصلّح =====
     setupConnection() {
         const statusId = this.isHost ? 'hostStatus' : 'joinStatus';
         
@@ -255,14 +253,17 @@ const PeerGame = {
             // 🆕 بدء اللعبة بعد تأخير قصير
             setTimeout(() => {
                 console.log('🎮 بدء اللعبة الأونلاين...');
+                
+                // 🆕 استدعاء الدالة الصحيحة
                 GameXO.startOnlineGame(this.isHost);
                 
+                // المضيف يبدأ اللعبة ويرسل للخصم
                 if (this.isHost) {
-                    console.log('🎯 المضيف يبدأ اللعبة');
+                    console.log('🎯 المضيف يبدأ اللعبة ويرسل gameStart');
                     GameXO.reset();
                     this.send({ type: 'gameStart' });
                 } else {
-                    console.log('⏳ اللاعب ينتظر بدء اللعبة من المضيف...');
+                    console.log('⏳ الخصم ينتظر gameStart من المضيف');
                 }
             }, 1000);
         });
@@ -287,7 +288,7 @@ const PeerGame = {
         });
     },
     
-    // ===== معالجة الرسائل =====
+    // ===== 🆕 معالجة الرسائل - مُصلّحة =====
     handleMessage(data) {
         if (!data || !data.type) return;
         
@@ -319,14 +320,17 @@ const PeerGame = {
                 break;
                 
             case 'gameStart':
+                console.log('🎮 استلام gameStart - بدء اللعبة');
+                GameXO.reset();
+                break;
+                
             case 'restart':
-                console.log('🔄 بدء/إعادة اللعبة');
+                console.log('🔄 استلام restart - إعادة اللعبة');
                 GameXO.reset();
                 break;
         }
     },
     
-    // ===== إرسال البيانات =====
     send(data) {
         if (this.conn && this.conn.open) {
             try {
@@ -340,7 +344,6 @@ const PeerGame = {
         return false;
     },
     
-    // ===== إرسال حركة =====
     sendMove(index) {
         console.log('📤 إرسال حركة:', index);
         this.send({ 
@@ -350,7 +353,6 @@ const PeerGame = {
         });
     },
     
-    // ===== نظام Heartbeat =====
     startHeartbeat() {
         this.stopHeartbeat();
         this.heartbeatInterval = setInterval(() => {
@@ -368,7 +370,6 @@ const PeerGame = {
         }
     },
     
-    // ===== تحديث جودة الاتصال =====
     updateConnectionQuality() {
         const qualityText = document.getElementById('qualityText');
         if (!qualityText) return;
@@ -384,7 +385,6 @@ const PeerGame = {
         }
     },
     
-    // ===== إعادة الاتصال الذكي =====
     attemptReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             Utils.showToast('❌ تعذر إعادة الاتصال', 'error');
@@ -416,7 +416,6 @@ const PeerGame = {
         }, delay);
     },
     
-    // ===== معالجة أخطاء PeerJS =====
     handlePeerError(err) {
         const statusId = this.isHost ? 'hostStatus' : 'joinStatus';
         let message = '❌ خطأ: ';
@@ -439,7 +438,6 @@ const PeerGame = {
         this.showConnectionStatus(statusId, 'error', message);
     },
     
-    // ===== إظهار حالة الاتصال =====
     showConnectionStatus(elementId, type, message) {
         const el = document.getElementById(elementId);
         if (!el) return;
@@ -449,14 +447,12 @@ const PeerGame = {
         el.textContent = message;
     },
     
-    // ===== نسخ الكود =====
     async copyCode(code) {
         if (await Utils.copyToClipboard(code)) {
             Utils.showToast('📋 تم نسخ الكود!', 'success');
         }
     },
     
-    // ===== نسخ الرابط =====
     async copyURL() {
         const url = document.getElementById('gameURL')?.value;
         if (url && await Utils.copyToClipboard(url)) {
@@ -464,7 +460,6 @@ const PeerGame = {
         }
     },
     
-    // ===== مشاركة عبر واتساب =====
     shareWhatsApp() {
         const url = document.getElementById('gameURL')?.value;
         if (!url) return;
@@ -472,7 +467,6 @@ const PeerGame = {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     },
     
-    // ===== مشاركة عبر تيليجرام =====
     shareTelegram() {
         const url = document.getElementById('gameURL')?.value;
         if (!url) return;
@@ -480,7 +474,6 @@ const PeerGame = {
         window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
     },
     
-    // ===== التنظيف =====
     cleanup() {
         this.stopHeartbeat();
         this.isConnected = false;
@@ -498,7 +491,6 @@ const PeerGame = {
         this.currentCode = null;
         this.reconnectAttempts = 0;
         
-        // تنظيف الرابط
         if (window.history.replaceState) {
             const url = new URL(window.location.href);
             url.search = '';
