@@ -80,11 +80,11 @@
 <div class="tab-content" id="tab-games">
     <div class="container">
         <h2 class="section-title">🎮 اختر لعبتك المفضلة</h2>
-        <div class="games-grid">
+        <div class="games-grid" id="gamesList">
             <div class="game-card" onclick="GameXO.start()">
                 <div class="game-icon">⭕❌</div>
                 <h3>لعبة XO</h3>
-                <p>تحدى صديقك أو العب ضد الكمبيوتر</p>
+                <p>تحدى الكمبيوتر أو العب مع صديق</p>
                 <div class="game-reward">+10 نقاط لكل فوز</div>
             </div>
             <div class="game-card" onclick="GameMemory.start()">
@@ -155,7 +155,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ملفات JavaScript -->
+<!-- ملفات JavaScript بالترتيب الصحيح -->
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/user-data.js"></script>
