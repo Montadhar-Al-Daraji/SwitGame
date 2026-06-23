@@ -1,4 +1,7 @@
-/* ===== Location Info ===== */
+/* ============================================
+   location.css - أنماط تحديد الموقع
+   ============================================ */
+
 .location-info {
     background: #eff6ff; border: 2px solid #3b82f6; border-radius: 12px;
     padding: 15px; margin-bottom: 15px;
@@ -9,52 +12,18 @@
 .location-actions { display: flex; gap: 10px; margin-bottom: 15px; }
 .loc-btn {
     flex: 1; padding: 12px; border-radius: 10px; border: 2px solid;
-    cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s;
+    cursor: pointer; font-weight: 600; font-size: 14px;
 }
 .loc-btn.primary { background: #3b82f6; color: white; border-color: #3b82f6; }
-.loc-btn.primary:hover { background: #2563eb; }
 .loc-btn.secondary { background: white; color: #6b7280; border-color: #d1d5db; }
-.loc-btn.secondary:hover { background: #f9fafb; }
 
 #map { height: 300px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #e5e7eb; }
 
-/* ===== Forms ===== */
-.form-group { margin-bottom: 12px; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #374151; }
-.form-group input, .form-group textarea, .form-group select {
-    width: 100%; padding: 10px 12px; border: 2px solid #e5e7eb;
-    border-radius: 8px; font-size: 14px; font-family: inherit;
-    transition: border-color 0.3s;
-}
-.form-group input:focus, .form-group textarea:focus { outline: none; border-color: #3b82f6; }
-.form-group textarea { resize: vertical; min-height: 70px; }
-
-.manual-form { display: none; }
-.manual-form.active { display: block; }
-
-/* ===== Status Messages ===== */
 .status-msg { padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; display: none; }
 .status-msg.show { display: block; }
 .status-msg.success { background: #d1fae5; color: #065f46; }
 .status-msg.error { background: #fee2e2; color: #991b1b; }
 .status-msg.info { background: #dbeafe; color: #1e40af; }
-
-/* ===== Buttons ===== */
-.confirm-btn {
-    width: 100%; background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    color: white; border: none; padding: 15px; border-radius: 12px;
-    font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s;
-}
-.confirm-btn:hover { transform: translateY(-2px); }
-
-/* ===== Save Address Option ===== */
-.save-address-option {
-    display: flex; align-items: flex-start; gap: 10px;
-    background: #f0fdf4; padding: 12px; border-radius: 10px;
-    margin: 15px 0; border: 2px solid #10b981;
-}
-.save-address-option input { margin-top: 3px; flex-shrink: 0; }
-.save-address-option label { font-size: 13px; color: #065f46; cursor: pointer; line-height: 1.5; }
 
 @media (max-width: 600px) {
     .location-actions { flex-direction: column; }
