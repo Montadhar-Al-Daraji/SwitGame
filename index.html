@@ -29,6 +29,9 @@
         <button class="icon-btn" onclick="App.openTab('points')" title="نقاطي">
             ⭐<span class="badge points-badge" id="totalPointsBadge">0</span>
         </button>
+        <button class="icon-btn" id="locationStatusBtn" onclick="UserData.restartTracking()" title="حالة الموقع">
+            📍<span class="badge" id="locationAccuracyBadge" style="background:#6b7280;">-</span>
+        </button>
     </div>
 </header>
 
@@ -37,6 +40,7 @@
     <div class="tab active" data-tab="home" onclick="App.openTab('home')">🏠 الرئيسية</div>
     <div class="tab" data-tab="games" onclick="App.openTab('games')">🎮 الألعاب</div>
     <div class="tab" data-tab="points" onclick="App.openTab('points')">⭐ النقاط</div>
+    <div class="tab" data-tab="location" onclick="App.openTab('location')">📍 موقعي</div>
 </div>
 
 <!-- ===== تبويب الرئيسية ===== -->
@@ -80,7 +84,7 @@
 <div class="tab-content" id="tab-games">
     <div class="container">
         <h2 class="section-title">🎮 اختر لعبتك المفضلة</h2>
-        <div class="games-grid" id="gamesList">
+        <div class="games-grid">
             <div class="game-card" onclick="GameXO.start()">
                 <div class="game-icon">⭕❌</div>
                 <h3>لعبة XO</h3>
@@ -119,6 +123,78 @@
     </div>
 </div>
 
+<!-- ===== تبويب موقعي (جديد!) ===== -->
+<div class="tab-content" id="tab-location">
+    <div class="container">
+        <div class="location-hero">
+            <div class="location-icon">📍</div>
+            <h2>موقعي الحالي</h2>
+            <p>معلومات موقعك على الخريطة</p>
+        </div>
+
+        <div class="location-status-card" id="locationStatusCard">
+            <div class="status-header">
+                <span class="status-icon" id="locationStatusIcon">⏳</span>
+                <div>
+                    <h3 id="locationStatusTitle">جاري تحديد الموقع...</h3>
+                    <p id="locationStatusDesc">يرجى الانتظار</p>
+                </div>
+            </div>
+            
+            <div class="accuracy-meter">
+                <div class="accuracy-label">
+                    <span>الدقة:</span>
+                    <strong id="accuracyValue">-</strong>
+                </div>
+                <div class="accuracy-bar">
+                    <div class="accuracy-fill" id="accuracyFill" style="width:0%"></div>
+                </div>
+                <div class="accuracy-hint" id="accuracyHint">جاري التحسين...</div>
+            </div>
+
+            <div class="location-details" id="locationDetails" style="display:none;">
+                <div class="detail-row">
+                    <span>🌐 خط العرض:</span>
+                    <strong id="latValue">-</strong>
+                </div>
+                <div class="detail-row">
+                    <span>🌐 خط الطول:</span>
+                    <strong id="lngValue">-</strong>
+                </div>
+                <div class="detail-row">
+                    <span>🎯 عدد القراءات:</span>
+                    <strong id="readingsCount">-</strong>
+                </div>
+                <div class="detail-row">
+                    <span>🕐 آخر تحديث:</span>
+                    <strong id="lastUpdate">-</strong>
+                </div>
+            </div>
+
+            <div class="location-actions">
+                <button class="action-btn primary" onclick="UserData.restartTracking()">
+                    🔄 إعادة تحديد الموقع
+                </button>
+                <button class="action-btn secondary" onclick="showLocationOnMap()">
+                    🗺️ عرض على الخريطة
+                </button>
+            </div>
+        </div>
+
+        <div id="locationMap" style="height:400px; border-radius:15px; margin-top:20px; display:none;"></div>
+
+        <div class="privacy-card">
+            <h3>🔒 خصوصيتك محمية</h3>
+            <ul>
+                <li>✅ الموقع يُستخدم فقط لإرسال الهدايا إليك</li>
+                <li>✅ يمكنك إيقاف التتبع في أي وقت</li>
+                <li>✅ البيانات مشفرة وآمنة</li>
+                <li>✅ الدقة: 5-10 أمتار (مثل Google Maps)</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- ===== Modal طلب الموقع ===== -->
 <div class="modal-overlay" id="welcomeLocationModal">
     <div class="modal">
@@ -126,13 +202,24 @@
             <div style="font-size:70px; margin-bottom:15px;">🎁</div>
             <h2 style="color:#0369a1; margin-bottom:15px;">مرحباً بك!</h2>
             <p style="color:#475569; line-height:1.7; margin-bottom:20px;">
-                للحصول على <strong>هدايا حصرية</strong> وتجربة أفضل، هل تود السماح لنا بمعرفة موقعك؟
+                للحصول على <strong>هدايا حصرية</strong> وتجربة أفضل، نحتاج معرفة موقعك.
                 <br><br>
                 <strong>🔒 موقعك آمن</strong> ولن يُستخدم إلا لإرسال الهدايا إليك.
+                <br>
+                <strong>🎯 الدقة:</strong> 5-10 أمتار (مثل Google Maps تماماً)
             </p>
+            <div style="background:#f0fdf4; padding:15px; border-radius:10px; margin-bottom:20px; text-align:right;">
+                <h4 style="color:#065f46; margin-bottom:10px;">✨ مميزات السماح بالموقع:</h4>
+                <ul style="color:#065f46; font-size:14px; line-height:1.8; padding-right:20px;">
+                    <li>🎁 استلام الهدايا على عنوانك الدقيق</li>
+                    <li>🚚 توصيل سريع ودقيق</li>
+                    <li>🎯 تجربة مخصصة لك</li>
+                    <li>⭐ نقاط إضافية لكل زيارة</li>
+                </ul>
+            </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button class="confirm-btn" style="flex:1; min-width:150px;" onclick="UserData.handleWelcomeAllow()">
-                    ✅ السماح
+                    ✅ السماح وتحديد دقيق
                 </button>
                 <button class="confirm-btn" style="flex:1; min-width:150px; background:linear-gradient(135deg, #6b7280, #4b5563);" onclick="UserData.handleWelcomeDeny()">
                     ⏭️ لاحقاً
@@ -155,7 +242,7 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ملفات JavaScript بالترتيب الصحيح -->
+<!-- ملفات JavaScript بالترتيب -->
 <script src="js/firebase-config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/user-data.js"></script>
