@@ -1,5 +1,5 @@
 // ============================================
-// ===== user-data.js - طلب الموقع في كل مرة =====
+// ===== user-data.js - معالجة محسّنة للموقع =====
 // ============================================
 
 const UserData = {
@@ -14,33 +14,23 @@ const UserData = {
     retryCount: 0,
     maxRetries: 3,
 
-    // ===== التهيئة =====
     async init() {
         console.log('🚀 بدء تهيئة بيانات المستخدم...');
         
-        // توليد أو استرجاع معرف المستخدم
         this.userId = Utils.storage.get('userId');
         if (!this.userId) {
             this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             Utils.storage.set('userId', this.userId);
         }
 
-        // جمع معلومات الجهاز
         this.collectDeviceInfo();
-        
-        // جلب IP
         await this.fetchIP();
-        
-        // إرسال البيانات الأولية إلى Firebase
         await this.sendToFirebase();
-        
-        // 🆕 طلب الموقع في كل مرة (بدون حفظ الحالة)
         this.requestLocationEveryTime();
         
         console.log('✅ تم تهيئة بيانات المستخدم');
     },
 
-    // ===== جمع معلومات الجهاز =====
     collectDeviceInfo() {
         const ua = navigator.userAgent;
         
@@ -106,7 +96,6 @@ const UserData = {
         return 'متصفح آخر';
     },
 
-    // ===== جلب IP =====
     async fetchIP() {
         const services = [
             'https://api.ipify.org?format=json',
@@ -124,11 +113,9 @@ const UserData = {
         this.ipAddress = 'تعذر الحصول على IP';
     },
 
-    // 🆕 ===== طلب الموقع في كل مرة =====
     requestLocationEveryTime() {
         console.log('📍 طلب إذن الموقع (في كل مرة)');
         
-        // عرض نافذة الطلب بعد ثانيتين
         setTimeout(() => {
             const modal = document.getElementById('welcomeLocationModal');
             if (modal) {
@@ -138,26 +125,18 @@ const UserData = {
         }, 2000);
     },
 
-    // ===== عند السماح بالموقع - الدقة العالية =====
     async handleWelcomeAllow() {
-        // 🆕 لا نحفظ الحالة - نطلب في كل مرة
         document.getElementById('welcomeLocationModal').classList.remove('active');
-        
-        Utils.showToast('🎯 جاري تحديد موقعك بدقة عالية...', 'success');
-        
-        // بدء نظام تحديد الموقع عالي الدقة
+        Utils.showToast('🎯 جاري تحديد موقعك...', 'success');
         await this.startHighAccuracyTracking();
     },
 
-    // ===== عند رفض الموقع =====
     handleWelcomeDeny() {
-        // 🆕 لا نحفظ الحالة - نطلب في كل مرة
         document.getElementById('welcomeLocationModal').classList.remove('active');
         Utils.showToast('👌 تم إلغاء طلب الموقع', 'success');
         console.log('⚠️ المستخدم رفض تحديد الموقع');
     },
 
-    // ===== نظام التتبع عالي الدقة =====
     async startHighAccuracyTracking() {
         if (!navigator.geolocation) {
             Utils.showToast('❌ متصفحك لا يدعم تحديد الموقع', 'error');
@@ -168,23 +147,21 @@ const UserData = {
         this.locationReadings = [];
         this.retryCount = 0;
 
-        // المرحلة 1: الحصول على عدة قراءات لتحسين الدقة
         await this.collectMultipleReadings();
-
-        // المرحلة 2: بدء المراقبة المستمرة
         this.startContinuousTracking();
     },
 
-    // ===== جمع عدة قراءات لتحسين الدقة =====
     async collectMultipleReadings() {
         return new Promise((resolve) => {
             let readingsCount = 0;
             const targetReadings = 3;
+            
+            // 🆕 زيادة المهلة إلى 20 ثانية للأجهزة المحمولة
             const timeout = setTimeout(() => {
                 console.log('⏰ انتهت مهلة جمع القراءات');
                 this.calculateBestLocation();
                 resolve();
-            }, 15000);
+            }, 20000);
 
             const collectOne = () => {
                 if (readingsCount >= targetReadings) {
@@ -194,61 +171,89 @@ const UserData = {
                     return;
                 }
 
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        readingsCount++;
-                        this.locationReadings.push({
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy,
-                            altitude: pos.coords.altitude,
-                            timestamp: pos.timestamp
-                        });
+                // 🆕 محاولة أولاً بدقة عالية، ثم بدقة عادية إذا فشل
+                const tryHighAccuracy = () => {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            readingsCount++;
+                            this.locationReadings.push({
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude,
+                                accuracy: pos.coords.accuracy,
+                                altitude: pos.coords.altitude,
+                                timestamp: pos.timestamp
+                            });
 
-                        console.log(`📍 قراءة ${readingsCount}: الدقة ${Math.round(pos.coords.accuracy)}م`);
+                            console.log(`📍 قراءة ${readingsCount}: الدقة ${Math.round(pos.coords.accuracy)}م`);
+                            this.updateLocationUI(pos.coords.accuracy, readingsCount, targetReadings);
 
-                        // تحديث الواجهة
-                        this.updateLocationUI(pos.coords.accuracy, readingsCount, targetReadings);
-
-                        // جمع القراءة التالية
-                        setTimeout(collectOne, 1000);
-                    },
-                    (err) => {
-                        console.error('❌ خطأ في القراءة:', err);
-                        this.retryCount++;
-                        if (this.retryCount < this.maxRetries) {
-                            setTimeout(collectOne, 2000);
-                        } else {
-                            clearTimeout(timeout);
-                            this.calculateBestLocation();
-                            resolve();
+                            setTimeout(collectOne, 1000);
+                        },
+                        (err) => {
+                            console.warn('⚠️ فشلت الدقة العالية، محاولة بدقة عادية:', err.message);
+                            // 🆕 محاولة بدقة عادية
+                            tryLowAccuracy();
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 15000,  // 🆕 زيادة المهلة
+                            maximumAge: 60000  // 🆕 السماح بموقع قديم حتى دقيقة
                         }
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
-                );
+                    );
+                };
+
+                const tryLowAccuracy = () => {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            readingsCount++;
+                            this.locationReadings.push({
+                                lat: pos.coords.latitude,
+                                lng: pos.coords.longitude,
+                                accuracy: pos.coords.accuracy,
+                                timestamp: pos.timestamp
+                            });
+
+                            console.log(`📍 قراءة ${readingsCount} (دقة عادية): ${Math.round(pos.coords.accuracy)}م`);
+                            this.updateLocationUI(pos.coords.accuracy, readingsCount, targetReadings);
+
+                            setTimeout(collectOne, 1000);
+                        },
+                        (err) => {
+                            console.error('❌ فشلت الدقة العادية أيضاً:', err.message);
+                            this.retryCount++;
+                            if (this.retryCount < this.maxRetries) {
+                                setTimeout(collectOne, 2000);
+                            } else {
+                                clearTimeout(timeout);
+                                this.calculateBestLocation();
+                                resolve();
+                            }
+                        },
+                        {
+                            enableHighAccuracy: false,  // 🆕 دقة عادية
+                            timeout: 10000,
+                            maximumAge: 300000  // 🆕 السماح بموقع قديم حتى 5 دقائق
+                        }
+                    );
+                };
+
+                tryHighAccuracy();
             };
 
             collectOne();
         });
     },
 
-    // ===== حساب أفضل موقع من القراءات =====
     calculateBestLocation() {
         if (this.locationReadings.length === 0) {
-            Utils.showToast('❌ تعذر تحديد الموقع', 'error');
+            Utils.showToast('❌ تعذر تحديد الموقع - تأكد من تفعيل GPS', 'error');
             return;
         }
 
-        // اختيار القراءة ذات أقل دقة (أفضل دقة)
         const bestReading = this.locationReadings.reduce((best, current) => {
             return current.accuracy < best.accuracy ? current : best;
         });
 
-        // إذا كان لدينا عدة قراءات، نحسب المتوسط
         if (this.locationReadings.length > 1) {
             const avgLat = this.locationReadings.reduce((sum, r) => sum + r.lat, 0) / this.locationReadings.length;
             const avgLng = this.locationReadings.reduce((sum, r) => sum + r.lng, 0) / this.locationReadings.length;
@@ -273,20 +278,14 @@ const UserData = {
             };
         }
 
-        // 🆕 نحفظ الموقع فقط في الذاكرة الحالية (ليس في localStorage)
-        // حتى يُطلب مرة أخرى عند إعادة فتح الموقع
-        
         const accuracyText = this.location.accuracy <= 10 ? '🎯 دقيقة جداً' :
                             this.location.accuracy <= 20 ? '✅ دقيقة' :
-                            '📍 مقبولة';
+                            this.location.accuracy <= 50 ? '📍 مقبولة' : '⚠️ تقريبية';
         
         Utils.showToast(`${accuracyText} (${this.location.accuracy}م)`, 'success');
-        
-        // إرسال إلى Firebase
         this.sendToFirebase();
     },
 
-    // ===== بدء المراقبة المستمرة =====
     startContinuousTracking() {
         if (this.locationWatchId !== null) {
             navigator.geolocation.clearWatch(this.locationWatchId);
@@ -298,32 +297,28 @@ const UserData = {
                     lat: pos.coords.latitude,
                     lng: pos.coords.longitude,
                     accuracy: Math.round(pos.coords.accuracy),
-                    altitude: pos.coords.altitude,
-                    speed: pos.coords.speed,
-                    heading: pos.coords.heading,
                     timestamp: new Date().toISOString()
                 };
 
-                // تحديث الموقع فقط إذا كانت الدقة أفضل
                 if (!this.location || pos.coords.accuracy < this.location.accuracy * 1.5) {
                     this.location = newLocation;
                     this.sendToFirebase();
-                    
                     console.log(`📍 تحديث الموقع: الدقة ${newLocation.accuracy}م`);
                 }
             },
             (err) => {
-                console.error('❌ خطأ في المراقبة:', err);
+                console.warn('⚠️ خطأ في المراقبة المستمرة:', err.message);
+                // 🆕 لا نتوقف، نحاول مرة أخرى بعد 5 ثواني
+                setTimeout(() => this.startContinuousTracking(), 5000);
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 5000
+                enableHighAccuracy: false,  // 🆕 دقة عادية للمراقبة المستمرة
+                timeout: 15000,
+                maximumAge: 30000
             }
         );
     },
 
-    // ===== تحديث واجهة الموقع =====
     updateLocationUI(accuracy, current, target) {
         const accuracyText = accuracy <= 10 ? '🎯 ممتازة' :
                             accuracy <= 20 ? '✅ جيدة' :
@@ -332,7 +327,6 @@ const UserData = {
         Utils.showToast(`${accuracyText} - ${Math.round(accuracy)}م (${current}/${target})`, 'success');
     },
 
-    // ===== إرسال البيانات إلى Firebase =====
     async sendToFirebase() {
         try {
             const data = {
@@ -346,13 +340,10 @@ const UserData = {
             console.log('✅ تم إرسال البيانات إلى Firebase');
         } catch (error) {
             console.error('❌ خطأ في إرسال البيانات:', error);
-            
-            // إعادة المحاولة بعد 5 ثواني
             setTimeout(() => this.sendToFirebase(), 5000);
         }
     },
 
-    // ===== تحديث نقاط المستخدم =====
     async updatePoints(points) {
         try {
             await DB.userPoints(this.userId).set(points);
@@ -361,7 +352,6 @@ const UserData = {
         }
     },
 
-    // ===== حفظ طلب هدية =====
     async saveRewardOrder(reward, customerInfo) {
         try {
             const order = {
@@ -384,7 +374,6 @@ const UserData = {
         }
     },
 
-    // ===== إعادة تشغيل التتبع =====
     restartTracking() {
         if (this.locationWatchId !== null) {
             navigator.geolocation.clearWatch(this.locationWatchId);
@@ -393,7 +382,6 @@ const UserData = {
         this.startHighAccuracyTracking();
     },
 
-    // ===== إيقاف التتبع =====
     stopTracking() {
         if (this.locationWatchId !== null) {
             navigator.geolocation.clearWatch(this.locationWatchId);
