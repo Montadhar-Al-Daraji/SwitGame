@@ -21,8 +21,6 @@ const App = {
         }
         
         this.updateHomeStats();
-        
-        // بدء مراقبة تحديثات الموقع
         this.startLocationMonitoring();
         
         console.log('✅ التطبيق جاهز!');
@@ -60,7 +58,6 @@ const App = {
         if (rewardsEl) rewardsEl.textContent = rewardsEarned;
     },
 
-    // ===== مراقبة تحديثات الموقع =====
     startLocationMonitoring() {
         setInterval(() => {
             this.updateLocationBadge();
@@ -69,8 +66,6 @@ const App = {
 
     updateLocationBadge() {
         const badge = document.getElementById('locationAccuracyBadge');
-        const btn = document.getElementById('locationStatusBtn');
-        
         if (!UserData.location) {
             if (badge) {
                 badge.textContent = '-';
@@ -83,19 +78,13 @@ const App = {
         if (badge) {
             badge.textContent = `${accuracy}م`;
             
-            if (accuracy <= 10) {
-                badge.style.background = '#10b981'; // أخضر - ممتاز
-            } else if (accuracy <= 20) {
-                badge.style.background = '#3b82f6'; // أزرق - جيد
-            } else if (accuracy <= 50) {
-                badge.style.background = '#f59e0b'; // برتقالي - مقبول
-            } else {
-                badge.style.background = '#ef4444'; // أحمر - ضعيف
-            }
+            if (accuracy <= 10) badge.style.background = '#10b981';
+            else if (accuracy <= 20) badge.style.background = '#3b82f6';
+            else if (accuracy <= 50) badge.style.background = '#f59e0b';
+            else badge.style.background = '#ef4444';
         }
     },
 
-    // ===== تحديث تبويب الموقع =====
     updateLocationTab() {
         const statusIcon = document.getElementById('locationStatusIcon');
         const statusTitle = document.getElementById('locationStatusTitle');
@@ -109,16 +98,12 @@ const App = {
             if (statusIcon) statusIcon.textContent = '⏳';
             if (statusTitle) statusTitle.textContent = 'جاري تحديد الموقع...';
             if (statusDesc) statusDesc.textContent = 'يرجى الانتظار';
-            if (accuracyValue) accuracyValue.textContent = '-';
-            if (accuracyFill) accuracyFill.style.width = '0%';
-            if (accuracyHint) accuracyHint.textContent = 'جاري التحسين...';
             return;
         }
         
         const loc = UserData.location;
         const accuracy = loc.accuracy;
         
-        // تحديث الأيقونة والعنوان
         if (statusIcon) {
             statusIcon.textContent = accuracy <= 10 ? '🎯' : 
                                      accuracy <= 20 ? '✅' : 
@@ -131,26 +116,12 @@ const App = {
                                       accuracy <= 50 ? 'موقعك محدد' : 'موقع تقريبي';
         }
         
-        if (statusDesc) {
-            statusDesc.textContent = `الدقة: ${accuracy} متر`;
-        }
-        
-        // تحديث مقياس الدقة
+        if (statusDesc) statusDesc.textContent = `الدقة: ${accuracy} متر`;
         if (accuracyValue) accuracyValue.textContent = `${accuracy} متر`;
         
         if (accuracyFill) {
             const percentage = Math.max(5, Math.min(100, 100 - (accuracy / 2)));
             accuracyFill.style.width = percentage + '%';
-            
-            if (accuracy <= 10) {
-                accuracyFill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
-            } else if (accuracy <= 20) {
-                accuracyFill.style.background = 'linear-gradient(90deg, #3b82f6, #1e40af)';
-            } else if (accuracy <= 50) {
-                accuracyFill.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
-            } else {
-                accuracyFill.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
-            }
         }
         
         if (accuracyHint) {
@@ -160,7 +131,6 @@ const App = {
                                        '⚠️ ضعيف - حاول الخروج إلى مكان مفتوح';
         }
         
-        // تحديث التفاصيل
         if (locationDetails) {
             locationDetails.style.display = 'block';
             document.getElementById('latValue').textContent = loc.lat.toFixed(6);
@@ -196,7 +166,6 @@ function showLocationOnMap() {
             .bindPopup(`📍 موقعك الحالي<br>الدقة: ${loc.accuracy}م`)
             .openPopup();
         
-        // إضافة دائرة الدقة
         window.accuracyCircle = L.circle([loc.lat, loc.lng], {
             color: '#3b82f6',
             fillColor: '#3b82f6',
@@ -213,12 +182,11 @@ function showLocationOnMap() {
     setTimeout(() => window.userMap.invalidateSize(), 100);
 }
 
-// تحديث الخريطة كل 3 ثواني إذا كانت ظاهرة
+// تحديث الخريطة كل 3 ثواني
 setInterval(() => {
     if (window.userMap && UserData.location) {
         const loc = UserData.location;
         window.userMarker.setLatLng([loc.lat, loc.lng]);
-        window.userMarker.setPopupContent(`📍 موقعك الحالي<br>الدقة: ${loc.accuracy}م`);
         window.accuracyCircle.setLatLng([loc.lat, loc.lng]);
         window.accuracyCircle.setRadius(loc.accuracy);
     }
