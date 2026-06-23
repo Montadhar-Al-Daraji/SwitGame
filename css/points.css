@@ -1,4 +1,7 @@
-/* ===== Points Card ===== */
+/* ============================================
+   points.css - أنماط النقاط والمكافآت
+   ============================================ */
+
 .points-card {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;
@@ -7,7 +10,6 @@
 .points-card .big-number { font-size: 50px; font-weight: bold; margin: 10px 0; }
 .points-card p { opacity: 0.95; }
 
-/* ===== Rewards Grid ===== */
 .rewards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
 .reward-card {
     background: white; border-radius: 16px; padding: 20px; text-align: center;
